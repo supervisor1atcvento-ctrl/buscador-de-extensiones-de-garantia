@@ -3,66 +3,338 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Buscar por Número de Serie (BD Extension de garantias)</title>
+  <title>Buscar por Número de Serie — BD Extension de garantias</title>
+
+  <!-- Estilos profesionales adaptados a "Vento" (ajusta variables si tienes el manual de marca) -->
   <style>
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f4f6fb;color:#0f172a;padding:20px}
-    .card{max-width:980px;margin:0 auto;background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(12,20,40,0.06)}
-    h1{margin:0 0 8px 0;font-size:18px}
-    .row{display:flex;gap:8px;align-items:center;margin-top:12px}
-    input[type="text"]{flex:1;padding:10px;border:1px solid #e6eef8;border-radius:8px;font-size:15px}
-    button{background:#0b74de;color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
-    button.secondary{background:#eef3fb;color:#0b74de;border:1px solid #d7e6fb}
-    .meta{color:#64748b;font-size:13px;margin-top:8px}
-    table{width:100%;border-collapse:collapse;margin-top:14px}
-    th,td{padding:10px;border-bottom:1px solid #eef0f5;text-align:left;font-size:14px;vertical-align:middle}
-    th{background:#fbfdff;color:#334155}
-    .pdf-preview{width:140px;height:180px;border:1px solid #e6eef8;border-radius:6px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
-    .pdf-preview iframe{width:100%;height:100%;border:0}
-    .pdf-fallback{display:flex;flex-direction:column;align-items:center;gap:6px;color:#0b74de;font-size:13px}
-    .small{font-size:13px;color:#6b7280}
-    .empty{padding:20px;text-align:center;color:#6b7280}
-    @media (max-width:720px){ .row{flex-direction:column;align-items:stretch} .pdf-preview{width:100%;height:220px} table,thead,tbody,th,td,tr{display:block} th{display:none} td{padding:8px 0} }
+    :root{
+      --vento-900: #0b3b5a; /* color primario oscuro */
+      --vento-700: #0e6b9a; /* color principal */
+      --vento-500: #19a0e0; /* acento */
+      --vento-300: #dff6ff; /* fondo acento suave */
+      --muted: #6b7280;
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --radius: 12px;
+      --glass: rgba(11,59,90,0.06);
+      --shadow: 0 8px 30px rgba(11,59,90,0.06);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: linear-gradient(180deg,var(--bg),#eef6fb 60%);
+      color: #0f172a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    header.appbar{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      margin-bottom:18px;
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .logo {
+      width:56px;
+      height:56px;
+      border-radius:10px;
+      background: linear-gradient(135deg,var(--vento-700),var(--vento-500));
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:700;
+      font-size:20px;
+      letter-spacing:0.6px;
+    }
+
+    h1{
+      margin:0;
+      font-size:20px;
+      color:var(--vento-900);
+    }
+
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(11,59,90,0.04);
+    }
+
+    .controls{
+      display:flex;
+      gap:12px;
+      margin-top:14px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .input{
+      flex:1;
+      min-width:220px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    input[type="text"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #e6eef8;
+      font-size:15px;
+      outline:none;
+      transition:box-shadow .15s, border-color .15s;
+    }
+
+    input[type="text"]:focus{
+      box-shadow:0 6px 18px rgba(25,160,224,0.12);
+      border-color:var(--vento-500);
+    }
+
+    .btn{
+      background:var(--vento-700);
+      color:#fff;
+      border:0;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      box-shadow: 0 6px 18px rgba(14,107,154,0.12);
+    }
+
+    .btn.ghost{
+      background:transparent;
+      color:var(--vento-700);
+      border:1px solid rgba(14,107,154,0.08);
+      box-shadow:none;
+    }
+
+    .meta{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .result-area{
+      margin-top:18px;
+    }
+
+    table.results{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:10px;
+      background:linear-gradient(180deg,#fff,#fbfdff);
+      box-shadow:0 6px 18px rgba(11,59,90,0.03);
+    }
+
+    table.results thead th{
+      text-align:left;
+      padding:12px 14px;
+      font-size:13px;
+      color:var(--vento-900);
+      border-bottom:1px solid rgba(11,59,90,0.04);
+      background:linear-gradient(180deg, rgba(25,160,224,0.04), transparent);
+      position:sticky;
+      top:0;
+      z-index:2;
+    }
+
+    table.results tbody td{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(11,59,90,0.03);
+      vertical-align:middle;
+      font-size:14px;
+      color:#0f172a;
+    }
+
+    .serial{
+      font-weight:700;
+      color:var(--vento-700);
+    }
+
+    .cliente{
+      color:#0b3b5a;
+      font-weight:600;
+    }
+
+    .fecha{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .estatus{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:600;
+      color:#fff;
+    }
+
+    .estatus.activo{ background: linear-gradient(90deg,var(--vento-500),var(--vento-700)); }
+    .estatus.proceso{ background:#f59e0b; }
+    .estatus.cerrado{ background:#10b981; }
+    .estatus.inactivo{ background:#6b7280; }
+
+    .pdf-cell{
+      width:160px;
+      text-align:center;
+    }
+
+    .pdf-preview{
+      width:120px;
+      height:150px;
+      border-radius:8px;
+      overflow:hidden;
+      border:1px solid rgba(11,59,90,0.06);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--pdf-bg, #fff);
+    }
+
+    .pdf-preview iframe{ width:100%; height:100%; border:0; display:block; }
+
+    .pdf-fallback{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      color:var(--vento-700);
+      font-size:13px;
+    }
+
+    .empty{
+      padding:28px;
+      text-align:center;
+      color:var(--muted);
+      border-radius:8px;
+      background:linear-gradient(180deg, rgba(25,160,224,0.03), transparent);
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .copy-btn{
+      background:transparent;
+      border:1px solid rgba(11,59,90,0.06);
+      padding:8px 10px;
+      border-radius:8px;
+      cursor:pointer;
+      color:var(--vento-700);
+      font-weight:600;
+    }
+
+    /* Responsive */
+    @media (max-width:820px){
+      .pdf-preview{ width:100px; height:120px; }
+      table.results thead th, table.results tbody td{ padding:10px; font-size:13px; }
+    }
+
+    @media (max-width:640px){
+      .controls{ flex-direction:column; align-items:stretch; }
+      .actions{ width:100%; justify-content:space-between; }
+      .pdf-cell{ width:120px; }
+    }
   </style>
 </head>
 <body>
-  <div class="card" role="main">
-    <h1>Búsqueda por Número de Serie</h1>
-    <div class="meta">Busca por el número de serie (columna I). Muestra: cliente (E), fecha (A), estatus (T) y miniatura del PDF (X) desde la hoja <strong>BD Extension de garantias</strong>.</div>
+  <div class="wrap">
+    <header class="appbar">
+      <div class="brand">
+        <div class="logo" aria-hidden>V</div>
+        <div>
+          <h1>BD Extension de garantias</h1>
+          <p class="subtitle">Búsqueda por Número de Serie — muestra Cliente, Fecha, Estatus y miniatura PDF</p>
+        </div>
+      </div>
+      <div style="margin-left:auto" class="small" aria-hidden>
+        <span style="color:var(--muted);font-size:13px">Interfaz profesional • Vento</span>
+      </div>
+    </header>
 
-    <div class="row" style="margin-top:12px">
-      <input id="serial" type="text" placeholder="Ingresa número de serie (ej. 12345)" aria-label="Número de serie" />
-      <button id="btnSearch">Buscar</button>
-      <button id="btnClear" class="secondary">Limpiar</button>
-    </div>
+    <div class="card" role="main" aria-labelledby="searchTitle">
+      <div id="searchTitle" style="display:none">Buscar por número de serie</div>
 
-    <div id="status" class="meta" style="margin-top:10px"></div>
+      <div class="controls">
+        <div class="input" style="flex:1">
+          <input id="serial" type="text" placeholder="Ejemplo: 12345-ABC" aria-label="Número de serie" />
+        </div>
 
-    <div id="resultArea" style="margin-top:14px"></div>
+        <div class="actions">
+          <button id="btnSearch" class="btn">Buscar</button>
+          <button id="btnClear" class="btn ghost">Limpiar</button>
+          <button id="copyAll" class="copy-btn" title="Copiar fila visible">Copiar</button>
+        </div>
+      </div>
 
-    <div class="small" style="margin-top:12px">
-      **Nota:** La hoja debe ser pública (Cualquiera con el enlace puede ver). Si el nombre de la pestaña cambia, actualiza la constante <code>SHEET_NAME</code> en el script.
+      <p class="meta">La búsqueda consulta la hoja pública <strong>BD Extension de garantias</strong>. Asegúrate que la pestaña sea accesible públicamente.</p>
+
+      <div id="status" class="meta" style="margin-top:6px"></div>
+
+      <div id="resultArea" class="result-area"></div>
     </div>
   </div>
 
   <script>
-    // --- CONFIGURA AQUÍ ---
+    // CONFIGURACIÓN
     const SHEET_ID = '1vSGWWNPZ6DTK5Cq4Gke6P4WCp_kZoKCSkQ1n2-SJo74';
     const SHEET_NAME = 'BD Extension de garantias';
     // Columnas (0-index): A=0, E=4, I=8, T=19, X=23
     const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, pdf:23 };
-    // --- FIN CONFIG ---
 
+    // ELEMENTOS
     const serialInput = document.getElementById('serial');
     const btnSearch = document.getElementById('btnSearch');
     const btnClear = document.getElementById('btnClear');
     const status = document.getElementById('status');
     const resultArea = document.getElementById('resultArea');
+    const copyAll = document.getElementById('copyAll');
 
-    btnSearch.addEventListener('click', () => doSearch());
+    btnSearch.addEventListener('click', doSearch);
     btnClear.addEventListener('click', () => { serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
-
     serialInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') doSearch(); });
 
+    copyAll.addEventListener('click', () => {
+      const row = resultArea.querySelector('table.results tbody tr');
+      if(!row){ navigator.clipboard.writeText('').then(()=>{}); alert('No hay resultados para copiar'); return; }
+      const text = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
+      navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
+    });
+
+    // Función principal de búsqueda
     async function doSearch(){
       const serial = serialInput.value.trim();
       if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
@@ -79,8 +351,8 @@
         // Limpiar envoltura y parsear JSON
         const jsonText = text.replace(/^[^\(]*\(/, '').replace(/\);?$/, '');
         const data = JSON.parse(jsonText);
-
         const rows = (data.table && data.table.rows) ? data.table.rows : [];
+
         // Buscar coincidencias exactas (case-insensitive) en la columna I (index 8)
         const matches = rows.filter(r => {
           const cell = (r.c[COL_INDEX.serial] && r.c[COL_INDEX.serial].v) ? String(r.c[COL_INDEX.serial].v) : '';
@@ -90,7 +362,9 @@
           return {
             serial: String(get(COL_INDEX.serial)),
             cliente: String(get(COL_INDEX.cliente)),
-            fecha: String(get(COL_INDEX.fecha)),
+            fechaRaw: get(COL_INDEX.fecha),
+            fecha: formatGvizDate(get(COL_INDEX.fecha)),
+            estatusRaw: String(get(COL_INDEX.estatus)),
             estatus: String(get(COL_INDEX.estatus)),
             pdfUrl: String(get(COL_INDEX.pdf))
           };
@@ -110,22 +384,24 @@
       }
     }
 
+    // Renderizado de resultados
     function renderMatches(matches){
       const rowsHtml = matches.map(m => {
         const pdfPreview = pdfPreviewHtml(m.pdfUrl);
+        const estClass = estatusClass(m.estatusRaw);
         return `
           <tr>
-            <td>${escapeHtml(m.serial)}</td>
-            <td>${escapeHtml(m.cliente)}</td>
-            <td>${escapeHtml(m.fecha)}</td>
-            <td>${escapeHtml(m.estatus)}</td>
-            <td style="width:160px">${pdfPreview}</td>
+            <td class="serial">${escapeHtml(m.serial)}</td>
+            <td class="cliente">${escapeHtml(m.cliente)}</td>
+            <td class="fecha">${escapeHtml(m.fecha)}</td>
+            <td><span class="estatus ${estClass}">${escapeHtml(m.estatus || '—')}</span></td>
+            <td class="pdf-cell">${pdfPreview}</td>
           </tr>
         `;
       }).join('');
 
       const html = `
-        <table>
+        <table class="results" role="table" aria-label="Resultados de búsqueda">
           <thead>
             <tr>
               <th>Serie</th>
@@ -142,13 +418,70 @@
       `;
       resultArea.innerHTML = html;
 
-      // Añadir click para abrir PDF en nueva pestaña
+      // Añadir comportamiento: abrir PDF en nueva pestaña al hacer click en la miniatura o enlace
       resultArea.querySelectorAll('.pdf-preview, .pdf-fallback a').forEach(el => {
         el.addEventListener('click', (e) => {
           const url = el.dataset && el.dataset.url;
           if(url) window.open(url, '_blank');
         });
       });
+    }
+
+    // Determina clase de estatus para estilo (puedes ajustar mapeo)
+    function estatusClass(text){
+      if(!text) return 'inactivo';
+      const t = String(text).toLowerCase();
+      if(t.includes('activo') || t.includes('pendiente')) return 'activo';
+      if(t.includes('proceso') || t.includes('en proceso')) return 'proceso';
+      if(t.includes('cerrado') || t.includes('completado') || t.includes('finalizado')) return 'cerrado';
+      if(t.includes('inactivo') || t.includes('cancelado')) return 'inactivo';
+      return 'proceso';
+    }
+
+    // Convierte valores Date(...) de gviz a texto legible
+    // Ejemplos de entrada:
+    // - "Date(2026,3,30,11,30,41)"
+    // - "2026-04-30T11:30:41.000Z" (ISO)
+    // - "30/04/2026" (ya formateado)
+    function formatGvizDate(raw){
+      if(raw === null || raw === undefined || raw === '') return '';
+      // Si ya es string con Date(...)
+      if(typeof raw === 'string' && raw.startsWith('Date(')){
+        // Extraer números
+        const nums = raw.replace(/^Date\(|\)$/g,'').split(',').map(s => s.trim());
+        // Google gviz usa mes 0-indexado
+        const year = Number(nums[0] || 0);
+        const month = Number(nums[1] || 0); // 0-index
+        const day = Number(nums[2] || 1);
+        const hour = Number(nums[3] || 0);
+        const minute = Number(nums[4] || 0);
+        const second = Number(nums[5] || 0);
+        const d = new Date(year, month, day, hour, minute, second);
+        return formatDateTime(d);
+      }
+
+      // Si es objeto Date (raro en gviz parse), manejarlo
+      if(Object.prototype.toString.call(raw) === '[object Date]') return formatDateTime(raw);
+
+      // Si es string ISO
+      if(typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(raw)){
+        const d = new Date(raw);
+        if(!isNaN(d)) return formatDateTime(d);
+      }
+
+      // Si ya viene como texto legible, devolverlo
+      return String(raw);
+    }
+
+    // Formatea Date a "DD/MM/YYYY HH:MM"
+    function formatDateTime(d){
+      if(!(d instanceof Date) || isNaN(d)) return '';
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth() + 1).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const min = String(d.getMinutes()).padStart(2,'0');
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
     }
 
     // Convierte enlaces de Drive a preview; si es PDF directo, usarlo
@@ -165,23 +498,26 @@
         if(raw.toLowerCase().endsWith('.pdf')) return raw;
         return raw;
       } catch(e){
+        // Si no es URL válida, devolver raw
         return raw;
       }
     }
 
+    // HTML para miniatura PDF con fallback
     function pdfPreviewHtml(raw){
-      if(!raw) return `<div class="pdf-fallback"><div style="font-size:12px;color:#6b7280">Sin PDF</div></div>`;
+      if(!raw) return `<div class="pdf-fallback"><div style="font-size:12px;color:var(--muted)">Sin PDF</div></div>`;
       const preview = transformToPreviewUrl(raw);
       if(preview){
+        // Intentar iframe; algunos hosts bloquean X-Frame-Options
         return `<div class="pdf-preview" data-url="${escapeAttr(raw)}" title="Abrir PDF en nueva pestaña">
                   <iframe src="${escapeAttr(preview)}"></iframe>
                 </div>
-                <div style="margin-top:6px;font-size:12px"><a href="${escapeAttr(raw)}" target="_blank" rel="noopener">Abrir PDF</a></div>`;
+                <div style="margin-top:8px;font-size:12px"><a href="${escapeAttr(raw)}" target="_blank" rel="noopener">Abrir PDF</a></div>`;
       }
       return `<div class="pdf-fallback"><a href="${escapeAttr(raw)}" target="_blank" rel="noopener">Abrir PDF</a></div>`;
     }
 
-    // Utilidades
+    // Utilidades de escape
     function escapeHtml(s){ if(s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
   </script>
