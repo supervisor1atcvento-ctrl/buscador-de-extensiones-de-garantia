@@ -196,13 +196,15 @@
   });
 
   copyRow.addEventListener('click', () => {
-    const row = resultArea.querySelector('table.results tbody tr');
-    if(!row){ alert('No hay resultados para copiar'); return; }
+    const rows = resultArea.querySelectorAll('table.results tbody tr');
+    if(!rows || rows.length === 0){ alert('No hay resultados para copiar'); return; }
+    // Copia la primera fila visible
+    const row = rows[0];
     const text = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
     navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
   });
 
-  // Buscar por serial
+  // Buscar por serial (devuelve todas las coincidencias)
   async function searchSerial(){
     const serial = serialInput.value.trim();
     if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
@@ -216,8 +218,8 @@
       if(!res.ok) throw new Error('Error servidor');
       const data = await res.json();
       if(Array.isArray(data) && data.length>0){
-        renderSearchResult(data[0]);
-        status.textContent = 'Encontrado';
+        renderSearchResults(data);
+        status.textContent = `${data.length} resultado(s)`;
       } else {
         status.textContent = 'No encontrado';
         resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
@@ -228,23 +230,22 @@
     }
   }
 
-  // Render resultado único
-  function renderSearchResult(r){
-    const html = `
-      <table class="results" role="table" aria-label="Resultado">
+  // Render lista de resultados (varias filas)
+  function renderSearchResults(list){
+    const rows = list.map(r => {
+      return `<tr>
+        <td class="serial">${escapeHtml(r.serial)}</td>
+        <td class="cliente">${escapeHtml(r.cliente)}</td>
+        <td class="fecha">${formatDate(r.fecha)}</td>
+        <td>${renderEstatusBadge(r.estatus)}</td>
+        <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
+      </tr>`;
+    }).join('');
+    resultArea.innerHTML = `
+      <table class="results" role="table" aria-label="Resultados">
         <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="serial">${escapeHtml(r.serial)}</td>
-            <td class="cliente">${escapeHtml(r.cliente)}</td>
-            <td class="fecha">${formatDate(r.fecha)}</td>
-            <td>${renderEstatusBadge(r.estatus)}</td>
-            <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    resultArea.innerHTML = html;
+        <tbody>${rows}</tbody>
+      </table>`;
     attachPdfClicks();
   }
 
