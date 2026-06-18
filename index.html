@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BD Extension de garantias — Búsqueda y Panel Supervisor</title>
-
+  <title>BD Extension de garantias — Panel</title>
   <style>
     :root{
       --vento-900:#0b3b5a;
@@ -73,7 +72,7 @@
         <div class="logo" aria-hidden>V</div>
         <div>
           <h1>BD Extension de garantias</h1>
-          <p class="subtitle">Buscar por número de serie • Panel supervisor para autorizar/rechazar</p>
+          <p class="subtitle">Buscar por número de serie • Panel supervisor</p>
         </div>
       </div>
       <div style="margin-left:auto" class="meta">Interfaz Vento</div>
@@ -130,7 +129,7 @@
   // URL de tu Web App (Apps Script) desplegado
   const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzstG34H4YO6ZEihV4BsDG8_wr2NojanlFOBPIb_4qSErohRcVKwxoSQ9ESVSx4vxkL/exec';
 
-  // Columnas y utilidades (coinciden con el Apps Script)
+  // Columnas (coinciden con el Apps Script)
   const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, fechaDecision:20, autorizador:21, pdf:23 };
 
   // Elementos
@@ -161,6 +160,7 @@
     const pass = superPass.value.trim();
     if(!pass){ alert('Introduce contraseña'); return; }
     try {
+      // Usamos GET pending para evitar CORS
       const url = new URL(WEBAPP_URL);
       url.searchParams.set('action','pending');
       url.searchParams.set('pass', pass);
@@ -302,19 +302,23 @@
         if(!action) return alert('Selecciona una acción');
         const autorizador = autorizaSelect.value || '';
         if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
+
+        // Llamada GET para evitar CORS: action=update
         try {
-          const payload = { serial, newStatus: action, autorizador, pass: supervisorPassValue };
-          const res = await fetch(WEBAPP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+          const url = new URL(WEBAPP_URL);
+          url.searchParams.set('action','update');
+          url.searchParams.set('serial', serial);
+          url.searchParams.set('newStatus', action);
+          url.searchParams.set('autorizador', autorizador);
+          url.searchParams.set('pass', supervisorPassValue);
+          const res = await fetch(url.toString());
+          if(!res.ok) throw new Error('Error servidor');
           const data = await res.json();
           if(data && data.ok){
             alert('Actualizado');
             await loadPending();
           } else {
-            alert('Error: ' + (data.error || 'no se pudo actualizar'));
+            alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
           }
         } catch(err){
           console.error(err);
