@@ -78,8 +78,8 @@ input[type="text"]:focus, input[type="password"]:focus{
 /* Resultados */
 .result-area{margin-top:18px}
 table.results{width:100%;border-collapse:collapse;margin-top:14px;background:var(--card-bg);box-shadow:0 8px 24px rgba(35,31,32,0.04);border-radius:10px;overflow:hidden}
-table.results thead th{padding:14px 16px;text-align:left;font-size:14px;color:var(--brand-black);background:linear-gradient(180deg, rgba(242,143,23,0.04), transparent);border-bottom:1px solid rgba(35,31,32,0.04)}
-table.results tbody td{padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.03);vertical-align:middle;font-size:15px}
+table.results thead th{padding:12px 14px;text-align:left;font-size:13px;color:var(--brand-black);background:linear-gradient(180deg, rgba(242,143,23,0.04), transparent);border-bottom:1px solid rgba(35,31,32,0.04)}
+table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0.03);vertical-align:middle;font-size:14px}
 
 /* Column styles */
 .serial{font-weight:800;color:var(--brand-accent)}
@@ -93,22 +93,37 @@ table.results tbody td{padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0
 .estatus.pendiente{background:linear-gradient(90deg,#f59e0b,#f28f17)}
 
 /* PDF preview */
-.pdf-cell{width:180px;text-align:center}
-.pdf-preview{width:140px;height:170px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
+.pdf-cell{width:160px;text-align:center}
+.pdf-preview{width:120px;height:150px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
 .pdf-preview iframe{width:100%;height:100%;border:0}
 
 /* Empty state */
-.empty{padding:32px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
+.empty{padding:28px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
 
 /* Supervisor panel */
 .super-panel{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(35,31,32,0.04)}
 .form-row{display:flex;gap:10px;align-items:center}
 
+/* Details modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:1200}
+.modal{width:920px;max-width:95%;background:var(--card-bg);border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(35,31,32,0.25);border:1px solid rgba(35,31,32,0.06);max-height:80vh;overflow:auto}
+.modal h3{margin:0 0 8px 0;font-size:20px;color:var(--brand-black)}
+.modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.detail-row{background:linear-gradient(180deg,#fff,#fbfbff);padding:10px;border-radius:8px;border:1px solid rgba(35,31,32,0.03)}
+.detail-row strong{display:block;color:var(--brand-gray);font-size:12px;margin-bottom:6px}
+.detail-row span{color:var(--brand-black);font-weight:700}
+
+/* Small helpers */
+.small{font-size:13px;color:var(--brand-gray)}
+.actions-cell{display:flex;gap:8px;align-items:center}
+
 /* Responsive */
 @media (max-width:900px){
   .logo{width:56px;height:56px;font-size:22px}
   h1{font-size:32px}
-  .pdf-preview{width:120px;height:140px}
+  .pdf-preview{width:100px;height:120px}
+  .modal{width:720px}
+  .modal .grid{grid-template-columns:1fr}
 }
 @media (max-width:640px){
   .controls{flex-direction:column;align-items:stretch}
@@ -149,7 +164,7 @@ table.results tbody td{padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0
 
   <div class="super-panel" id="superPanel">
     <strong>Panel Supervisor</strong>
-    <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y autorizar/rechazar.</p>
+    <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y autorizar/rechazar. Usa "Ver detalles" para validar la información cargada antes de aprobar.</p>
 
     <div class="form-row" style="margin-top:10px">
       <input id="superPass" type="password" placeholder="Contraseña supervisor" />
@@ -174,11 +189,27 @@ table.results tbody td{padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0
 </div>
 </div>
 
+<!-- Details modal -->
+<div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 id="modalTitle">Detalles del registro</h3>
+      <div>
+        <button id="modalClose" class="btn ghost">Cerrar</button>
+      </div>
+    </div>
+    <div id="modalContent" style="margin-top:12px">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
 <script>
 // URL de tu Web App (Apps Script) desplegado
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby_YK8ZqOKTzK3iO7jOvk7Z9d6IauJKPKcGqL6uL5VzLKAhLRaRamReRq7lqau5vrk/exec';
 // Columnas (coinciden con el Apps Script)
 const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, fechaDecision:20, autorizador:21, pdf:23 };
+
 // Elementos
 const serialInput = document.getElementById('serial');
 const btnSearch = document.getElementById('btnSearch');
@@ -193,6 +224,10 @@ const superControls = document.getElementById('superControls');
 const pendingArea = document.getElementById('pendingArea');
 const autorizaSelect = document.getElementById('autorizaSelect');
 const btnRefresh = document.getElementById('btnRefresh');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalContent = document.getElementById('modalContent');
+const modalClose = document.getElementById('modalClose');
+
 let supervisorLogged = false;
 let supervisorPassValue = '';
 
@@ -249,6 +284,12 @@ copyRow.addEventListener('click', () => {
   navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
 });
 
+// Modal handlers
+modalClose.addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', (e) => { if(e.target === modalBackdrop) closeModal(); });
+function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); }
+function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); modalContent.innerHTML = ''; }
+
 // Buscar por serial (devuelve todas las coincidencias)
 async function searchSerial(){
   const serial = serialInput.value.trim();
@@ -275,26 +316,32 @@ async function searchSerial(){
   }
 }
 
-// Render lista de resultados (varias filas)
+// Render lista de resultados (varias filas) - ahora con más columnas y botón "Ver detalles"
 function renderSearchResults(list){
   const rows = list.map(r => {
+    // r puede contener campos adicionales: email, telefono, modelo, descripcion, usuario, fechaCarga, pdfUrl
     return `<tr>
       <td class="serial">${escapeHtml(r.serial)}</td>
       <td class="cliente">${escapeHtml(r.cliente)}</td>
       <td class="fecha">${formatDate(r.fecha)}</td>
       <td>${renderEstatusBadge(r.estatus)}</td>
+      <td class="small">${escapeHtml(r.usuario || '')}</td>
+      <td class="small">${escapeHtml(r.modelo || '')}</td>
+      <td class="small">${escapeHtml(r.email || '')}</td>
+      <td class="small">${escapeHtml(r.telefono || '')}</td>
       <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
+      <td class="actions-cell"><button class="btn ghost" data-record='${escapeAttr(JSON.stringify(r))}' onclick="showDetailsFromBtn(this)">Ver detalles</button></td>
     </tr>`;
   }).join('');
   resultArea.innerHTML = `
     <table class="results" role="table" aria-label="Resultados">
-      <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th></tr></thead>
+      <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Detalles</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
   attachPdfClicks();
 }
 
-// Cargar pendientes (supervisor)
+// Cargar pendientes (supervisor) - mantiene la lógica pero muestra más columnas y detalle
 async function loadPending(){
   try {
     const url = new URL(WEBAPP_URL);
@@ -321,6 +368,10 @@ function renderPending(list){
       <td>${escapeHtml(item.cliente)}</td>
       <td>${formatDate(item.fecha)}</td>
       <td>${renderEstatusBadge(item.estatus)}</td>
+      <td>${escapeHtml(item.usuario || '')}</td>
+      <td>${escapeHtml(item.modelo || '')}</td>
+      <td>${escapeHtml(item.email || '')}</td>
+      <td>${escapeHtml(item.telefono || '')}</td>
       <td>${pdfCell(item.pdfUrl)}</td>
       <td>
         <select class="actionSelect">
@@ -329,10 +380,11 @@ function renderPending(list){
           <option value="RECHAZADO">RECHAZADO</option>
         </select>
         <button class="applyBtn" style="margin-left:6px" data-serial="${escapeAttr(item.serial)}">Aplicar</button>
+        <button class="btn ghost" style="margin-left:6px" data-record='${escapeAttr(JSON.stringify(item))}' onclick="showDetailsFromBtn(this)">Ver detalles</button>
       </td>
     </tr>`;
   }).join('');
-  pendingArea.innerHTML = `<table class="results"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table>`;
+  pendingArea.innerHTML = `<table class="results"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table>`;
   attachPendingListeners();
   attachPdfClicks();
 }
@@ -408,11 +460,71 @@ function transformToPreviewUrl(raw){
 // Añadir click para abrir PDF en nueva pestaña
 function attachPdfClicks(){
   document.querySelectorAll('.pdf-preview').forEach(el => {
+    // Remove previous listeners to avoid duplicates
+    el.replaceWith(el.cloneNode(true));
+  });
+  document.querySelectorAll('.pdf-preview').forEach(el => {
     el.addEventListener('click', (e) => {
       const url = el.dataset.url;
       if(url) window.open(url, '_blank');
     });
   });
+}
+
+// Mostrar detalles desde botón (se usa en HTML inline onclick)
+function showDetailsFromBtn(btn){
+  try {
+    const raw = btn.getAttribute('data-record');
+    const obj = raw ? JSON.parse(raw) : null;
+    if(obj) showDetails(obj);
+  } catch(e){
+    console.error('Error parsing record for details', e);
+    alert('No se pueden mostrar los detalles');
+  }
+}
+
+// Construye y muestra el modal con todos los campos disponibles del registro
+function showDetails(record){
+  // Campos comunes que queremos mostrar con etiquetas claras
+  const fields = [
+    {k:'serial', label:'Número de serie'},
+    {k:'cliente', label:'Cliente'},
+    {k:'usuario', label:'Usuario que cargó'},
+    {k:'email', label:'Email'},
+    {k:'telefono', label:'Teléfono'},
+    {k:'modelo', label:'Modelo'},
+    {k:'descripcion', label:'Descripción / Observaciones'},
+    {k:'fechaCarga', label:'Fecha de carga'},
+    {k:'fecha', label:'Fecha (registro)'},
+    {k:'estatus', label:'Estatus'},
+    {k:'autorizador', label:'Autorizador'},
+    {k:'fechaDecision', label:'Fecha decisión'},
+    {k:'pdfUrl', label:'Enlace PDF'}
+  ];
+
+  // Build HTML
+  let html = `<div class="grid">`;
+  fields.forEach(f => {
+    const val = record[f.k] !== undefined && record[f.k] !== null ? record[f.k] : '';
+    let display = '';
+    if(f.k === 'pdfUrl'){
+      display = val ? `<a href="${escapeAttr(val)}" target="_blank" rel="noopener">Abrir PDF</a>` : '<span class="small">Sin PDF</span>';
+    } else if(f.k === 'fecha' || f.k === 'fechaCarga' || f.k === 'fechaDecision'){
+      display = `<span>${escapeHtml(formatDate(val))}</span>`;
+    } else if(f.k === 'descripcion'){
+      display = `<span style="white-space:pre-wrap">${escapeHtml(String(val))}</span>`;
+    } else {
+      display = `<span>${escapeHtml(String(val))}</span>`;
+    }
+    html += `<div class="detail-row"><strong>${f.label}</strong>${display}</div>`;
+  });
+  html += `</div>`;
+
+  // Additional: show raw JSON for audit if needed
+  html += `<div style="margin-top:12px" class="detail-row"><strong>Registro (JSON)</strong><span style="font-weight:400;color:var(--brand-gray);font-size:13px;display:block;white-space:pre-wrap">${escapeHtml(JSON.stringify(record, null, 2))}</span></div>`;
+
+  modalContent.innerHTML = html;
+  openModal();
 }
 
 // Formato de fecha: maneja Date(...) de gviz, ISO o texto
