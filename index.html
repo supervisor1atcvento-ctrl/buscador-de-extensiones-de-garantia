@@ -1,401 +1,445 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BD Extension de garantias — Panel</title>
-  <style>
-    :root{
-      --vento-900:#0b3b5a;
-      --vento-700:#0e6b9a;
-      --vento-500:#19a0e0;
-      --muted:#6b7280;
-      --bg:#f4f7fb;
-      --card:#ffffff;
-      --radius:12px;
-      --shadow:0 8px 30px rgba(11,59,90,0.06);
-      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-    }
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:linear-gradient(180deg,var(--bg),#eef6fb 60%);
-      color:#0f172a;
-      -webkit-font-smoothing:antialiased;
-      padding:28px;
-      display:flex;
-      justify-content:center;
-    }
-    .wrap{width:100%;max-width:1100px}
-    header.appbar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--vento-700),var(--vento-500));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px}
-    h1{margin:0;font-size:20px;color:var(--vento-900)}
-    .subtitle{margin:0;color:var(--muted);font-size:13px}
-    .card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid rgba(11,59,90,0.04)}
-    .controls{display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap}
-    .input{flex:1;min-width:220px;display:flex;gap:8px;align-items:center}
-    input[type="text"], input[type="password"], select{
-      width:100%;padding:12px 14px;border-radius:10px;border:1px solid #e6eef8;font-size:15px;outline:none;
-    }
-    input[type="text"]:focus, input[type="password"]:focus{box-shadow:0 6px 18px rgba(25,160,224,0.12);border-color:var(--vento-500)}
-    .btn{background:var(--vento-700);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
-    .btn.ghost{background:transparent;color:var(--vento-700);border:1px solid rgba(14,107,154,0.08)}
-    .meta{margin-top:10px;color:var(--muted);font-size:13px}
-    .result-area{margin-top:18px}
-    table.results{width:100%;border-collapse:collapse;margin-top:14px;background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:0 6px 18px rgba(11,59,90,0.03);border-radius:8px;overflow:hidden}
-    table.results thead th{padding:12px 14px;text-align:left;font-size:13px;color:var(--vento-900);background:linear-gradient(180deg,rgba(25,160,224,0.04),transparent);border-bottom:1px solid rgba(11,59,90,0.04)}
-    table.results tbody td{padding:12px 14px;border-bottom:1px solid rgba(11,59,90,0.03);vertical-align:middle;font-size:14px}
-    .serial{font-weight:700;color:var(--vento-700)}
-    .cliente{color:#0b3b5a;font-weight:600}
-    .fecha{color:var(--muted);font-size:13px}
-    .estatus{display:inline-block;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:700;color:#fff}
-    .estatus.autorizado{background:linear-gradient(90deg,#10b981,#059669)}
-    .estatus.rechazado{background:#ef4444}
-    .estatus.pendiente{background:#f59e0b}
-    .pdf-cell{width:160px;text-align:center}
-    .pdf-preview{width:120px;height:150px;border-radius:8px;overflow:hidden;border:1px solid rgba(11,59,90,0.06);display:flex;align-items:center;justify-content:center;background:#fff}
-    .pdf-preview iframe{width:100%;height:100%;border:0}
-    .pdf-fallback{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--vento-700);font-size:13px}
-    .empty{padding:28px;text-align:center;color:var(--muted);border-radius:8px;background:linear-gradient(180deg,rgba(25,160,224,0.03),transparent)}
-    .super-panel{margin-top:18px;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fbfdff,#fff);border:1px solid rgba(11,59,90,0.03)}
-    .form-row{display:flex;gap:8px;align-items:center}
-    .copy-btn{background:transparent;border:1px solid rgba(11,59,90,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--vento-700);font-weight:600}
-    @media (max-width:820px){.pdf-preview{width:100px;height:120px}.controls{flex-direction:column;align-items:stretch}}
-    @media (max-width:640px){.form-row{flex-direction:column;align-items:stretch}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BD Extension de garantias — Panel</title>
+<style>
+:root{
+  --brand-white: #FFFFFF;
+  --brand-black: #231F20;
+  --brand-gray: #616160;
+  --brand-accent: #F28F17;
+  --bg-soft: linear-gradient(180deg,#fbfdff,#f7f9fb);
+  --card-bg: #FFFFFF;
+  --radius: 12px;
+  --shadow-soft: 0 10px 30px rgba(35,31,32,0.06);
+  --glass: rgba(255,255,255,0.6);
+  font-family: "Segoe UI", Inter, system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+
+/* Layout base */
+html,body{height:100%;margin:0;background:var(--bg-soft);color:var(--brand-black);-webkit-font-smoothing:antialiased;}
+body{display:flex;justify-content:center;padding:36px;}
+.wrap{width:100%;max-width:1200px;padding:8px;}
+
+/* Appbar */
+header.appbar{display:flex;align-items:center;gap:18px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{
+  width:64px;height:64px;border-radius:12px;
+  background:linear-gradient(135deg, rgba(242,143,23,0.95), rgba(35,31,32,0.08));
+  display:flex;align-items:center;justify-content:center;color:var(--brand-white);
+  font-weight:800;font-size:26px;box-shadow:var(--shadow-soft);
+  border:2px solid rgba(35,31,32,0.04);
+}
+
+/* Typography */
+h1{margin:0;font-size:38px;font-weight:700;color:var(--brand-black);line-height:1}
+.subtitle{margin:0;color:var(--brand-gray);font-size:20px;font-weight:600}
+
+/* Card principal */
+.card{
+  background:var(--card-bg);
+  border-radius:var(--radius);
+  padding:22px;
+  box-shadow:var(--shadow-soft);
+  border:1px solid rgba(35,31,32,0.04);
+}
+
+/* Controls */
+.controls{display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.input{flex:1;min-width:260px;display:flex;gap:8px;align-items:center}
+input[type="text"], input[type="password"], select{
+  width:100%;padding:14px 16px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);
+  font-size:16px;background:linear-gradient(180deg, #fff, #fbfbfb);color:var(--brand-black);
+  outline:none;box-shadow:none;
+}
+input[type="text"]:focus, input[type="password"]:focus{
+  box-shadow:0 8px 24px rgba(242,143,23,0.08);border-color:var(--brand-accent);
+}
+
+/* Buttons */
+.btn{
+  background:var(--brand-accent);color:var(--brand-white);border:0;padding:11px 16px;border-radius:10px;
+  cursor:pointer;font-weight:700;font-size:15px;box-shadow:0 6px 18px rgba(242,143,23,0.12);
+}
+.btn.ghost{
+  background:transparent;color:var(--brand-black);border:1px solid rgba(35,31,32,0.08);
+  box-shadow:none;font-weight:600;
+}
+.copy-btn{
+  background:transparent;border:1px dashed rgba(35,31,32,0.06);padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--brand-black);
+}
+
+/* Meta text */
+.meta{margin-top:10px;color:var(--brand-gray);font-size:14px}
+
+/* Resultados */
+.result-area{margin-top:18px}
+table.results{width:100%;border-collapse:collapse;margin-top:14px;background:var(--card-bg);box-shadow:0 8px 24px rgba(35,31,32,0.04);border-radius:10px;overflow:hidden}
+table.results thead th{padding:14px 16px;text-align:left;font-size:14px;color:var(--brand-black);background:linear-gradient(180deg, rgba(242,143,23,0.04), transparent);border-bottom:1px solid rgba(35,31,32,0.04)}
+table.results tbody td{padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.03);vertical-align:middle;font-size:15px}
+
+/* Column styles */
+.serial{font-weight:800;color:var(--brand-accent)}
+.cliente{color:var(--brand-black);font-weight:700}
+.fecha{color:var(--brand-gray);font-size:13px}
+
+/* Badges */
+.estatus{display:inline-block;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:800;color:var(--brand-white)}
+.estatus.autorizado{background:linear-gradient(90deg,#16a34a,#059669)}
+.estatus.rechazado{background:#ef4444}
+.estatus.pendiente{background:linear-gradient(90deg,#f59e0b,#f28f17)}
+
+/* PDF preview */
+.pdf-cell{width:180px;text-align:center}
+.pdf-preview{width:140px;height:170px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
+.pdf-preview iframe{width:100%;height:100%;border:0}
+
+/* Empty state */
+.empty{padding:32px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
+
+/* Supervisor panel */
+.super-panel{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(35,31,32,0.04)}
+.form-row{display:flex;gap:10px;align-items:center}
+
+/* Responsive */
+@media (max-width:900px){
+  .logo{width:56px;height:56px;font-size:22px}
+  h1{font-size:32px}
+  .pdf-preview{width:120px;height:140px}
+}
+@media (max-width:640px){
+  .controls{flex-direction:column;align-items:stretch}
+  .form-row{flex-direction:column;align-items:stretch}
+}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="appbar">
-      <div class="brand">
-        <div class="logo" aria-hidden>V</div>
-        <div>
-          <h1>BD Extension de garantias</h1>
-          <p class="subtitle">Buscar por número de serie • Panel supervisor</p>
-        </div>
-      </div>
-      <div style="margin-left:auto" class="meta">Interfaz Vento</div>
-    </header>
-
-    <div class="card" role="main">
-      <div>
-        <strong>Búsqueda por número de serie</strong>
-        <div class="controls" style="margin-top:10px">
-          <div class="input">
-            <input id="serial" type="text" placeholder="Ejemplo: 12345-ABC" aria-label="Número de serie" />
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button id="btnSearch" class="btn">Buscar</button>
-            <button id="btnClear" class="btn ghost">Limpiar</button>
-            <button id="copyRow" class="copy-btn" title="Copiar fila visible">Copiar</button>
-          </div>
-        </div>
-
-        <p id="status" class="meta"></p>
-
-        <div id="resultArea" class="result-area"></div>
-      </div>
-
-      <div class="super-panel" id="superPanel">
-        <strong>Panel Supervisor</strong>
-        <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y autorizar/rechazar.</p>
-
-        <div class="form-row" style="margin-top:10px">
-          <input id="superPass" type="password" placeholder="Contraseña supervisor" />
-          <button id="btnLogin" class="btn">Entrar</button>
-          <button id="btnLogout" class="btn ghost" style="display:none">Salir</button>
-        </div>
-
-        <div id="superControls" style="display:none;margin-top:12px">
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <label class="meta" style="margin-right:6px">Autoriza como:</label>
-            <select id="autorizaSelect">
-              <option value="CESAR">CESAR</option>
-              <option value="IVAN">IVAN</option>
-              <option value="ANGEL">ANGEL</option>
-              <option value="CECILIA">CECILIA</option>
-            </select>
-            <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
-          </div>
-
-          <div id="pendingArea"></div>
-        </div>
-      </div>
+<div class="wrap">
+<header class="appbar">
+  <div class="brand">
+    <div class="logo" aria-hidden>V</div>
+    <div>
+      <h1>BD Extension de garantias</h1>
+      <p class="subtitle">Buscar por número de serie • Panel supervisor</p>
     </div>
   </div>
+  <div style="margin-left:auto" class="meta">Interfaz Vento</div>
+</header>
+
+<div class="card" role="main">
+  <div>
+    <strong>Búsqueda por número de serie</strong>
+    <div class="controls" style="margin-top:10px">
+      <div class="input">
+        <input id="serial" type="text" placeholder="Ejemplo: 12345-ABC" aria-label="Número de serie" />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btnSearch" class="btn">Buscar</button>
+        <button id="btnClear" class="btn ghost">Limpiar</button>
+        <button id="copyRow" class="copy-btn" title="Copiar fila visible">Copiar</button>
+      </div>
+    </div>
+
+    <p id="status" class="meta"></p>
+    <div id="resultArea" class="result-area"></div>
+  </div>
+
+  <div class="super-panel" id="superPanel">
+    <strong>Panel Supervisor</strong>
+    <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y autorizar/rechazar.</p>
+
+    <div class="form-row" style="margin-top:10px">
+      <input id="superPass" type="password" placeholder="Contraseña supervisor" />
+      <button id="btnLogin" class="btn">Entrar</button>
+      <button id="btnLogout" class="btn ghost" style="display:none">Salir</button>
+    </div>
+
+    <div id="superControls" style="display:none;margin-top:12px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <label class="meta" style="margin-right:6px">Autoriza como:</label>
+        <select id="autorizaSelect">
+          <option value="CESAR">CESAR</option>
+          <option value="IVAN">IVAN</option>
+          <option value="ANGEL">ANGEL</option>
+          <option value="CECILIA">CECILIA</option>
+        </select>
+        <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
+      </div>
+      <div id="pendingArea"></div>
+    </div>
+  </div>
+</div>
+</div>
 
 <script>
-  // URL de tu Web App (Apps Script) desplegado
-  const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby_YK8ZqOKTzK3iO7jOvk7Z9d6IauJKPKcGqL6uL5VzLKAhLRaRamReRq7lqau5vrk/exec';
+// URL de tu Web App (Apps Script) desplegado
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby_YK8ZqOKTzK3iO7jOvk7Z9d6IauJKPKcGqL6uL5VzLKAhLRaRamReRq7lqau5vrk/exec';
+// Columnas (coinciden con el Apps Script)
+const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, fechaDecision:20, autorizador:21, pdf:23 };
+// Elementos
+const serialInput = document.getElementById('serial');
+const btnSearch = document.getElementById('btnSearch');
+const btnClear = document.getElementById('btnClear');
+const status = document.getElementById('status');
+const resultArea = document.getElementById('resultArea');
+const copyRow = document.getElementById('copyRow');
+const superPass = document.getElementById('superPass');
+const btnLogin = document.getElementById('btnLogin');
+const btnLogout = document.getElementById('btnLogout');
+const superControls = document.getElementById('superControls');
+const pendingArea = document.getElementById('pendingArea');
+const autorizaSelect = document.getElementById('autorizaSelect');
+const btnRefresh = document.getElementById('btnRefresh');
+let supervisorLogged = false;
+let supervisorPassValue = '';
 
-  // Columnas (coinciden con el Apps Script)
-  const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, fechaDecision:20, autorizador:21, pdf:23 };
+// Eventos
+btnSearch.addEventListener('click', searchSerial);
+btnClear.addEventListener('click', () => { serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
+serialInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchSerial(); });
 
-  // Elementos
-  const serialInput = document.getElementById('serial');
-  const btnSearch = document.getElementById('btnSearch');
-  const btnClear = document.getElementById('btnClear');
-  const status = document.getElementById('status');
-  const resultArea = document.getElementById('resultArea');
-  const copyRow = document.getElementById('copyRow');
-
-  const superPass = document.getElementById('superPass');
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const superControls = document.getElementById('superControls');
-  const pendingArea = document.getElementById('pendingArea');
-  const autorizaSelect = document.getElementById('autorizaSelect');
-  const btnRefresh = document.getElementById('btnRefresh');
-
-  let supervisorLogged = false;
-  let supervisorPassValue = '';
-
-  // Eventos
-  btnSearch.addEventListener('click', searchSerial);
-  btnClear.addEventListener('click', () => { serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
-  serialInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchSerial(); });
-
-  btnLogin.addEventListener('click', async () => {
-    const pass = superPass.value.trim();
-    if(!pass){ alert('Introduce contraseña'); return; }
-    try {
-      // Usamos GET pending para evitar CORS
-      const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','pending');
-      url.searchParams.set('pass', pass);
-      const res = await fetch(url.toString());
-      if(!res.ok) throw new Error('No autorizado');
-      const data = await res.json();
-      if(data && data.error){ throw new Error(data.error); }
-      supervisorLogged = true;
-      supervisorPassValue = pass;
-      superControls.style.display = 'block';
-      btnLogout.style.display = 'inline-block';
-      btnLogin.style.display = 'none';
-      superPass.value = '';
-      renderPending(data);
-    } catch(err){
-      alert('Acceso denegado');
-      console.error(err);
-    }
-  });
-
-  btnLogout.addEventListener('click', () => {
-    supervisorLogged = false;
-    supervisorPassValue = '';
-    superControls.style.display = 'none';
-    btnLogout.style.display = 'none';
-    btnLogin.style.display = 'inline-block';
-    pendingArea.innerHTML = '';
-  });
-
-  btnRefresh.addEventListener('click', async () => {
-    if(!supervisorLogged) return alert('No autorizado');
-    await loadPending();
-  });
-
-  copyRow.addEventListener('click', () => {
-    const rows = resultArea.querySelectorAll('table.results tbody tr');
-    if(!rows || rows.length === 0){ alert('No hay resultados para copiar'); return; }
-    // Copia la primera fila visible
-    const row = rows[0];
-    const text = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
-    navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
-  });
-
-  // Buscar por serial (devuelve todas las coincidencias)
-  async function searchSerial(){
-    const serial = serialInput.value.trim();
-    if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
-    status.textContent = 'Buscando...';
-    resultArea.innerHTML = '';
-    try {
-      const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','search');
-      url.searchParams.set('serial', serial);
-      const res = await fetch(url.toString());
-      if(!res.ok) throw new Error('Error servidor');
-      const data = await res.json();
-      if(Array.isArray(data) && data.length>0){
-        renderSearchResults(data);
-        status.textContent = `${data.length} resultado(s)`;
-      } else {
-        status.textContent = 'No encontrado';
-        resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
-      }
-    } catch(err){
-      console.error(err);
-      status.textContent = 'Error al buscar';
-    }
+btnLogin.addEventListener('click', async () => {
+  const pass = superPass.value.trim();
+  if(!pass){ alert('Introduce contraseña'); return; }
+  try {
+    // Usamos GET pending para evitar CORS
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','pending');
+    url.searchParams.set('pass', pass);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('No autorizado');
+    const data = await res.json();
+    if(data && data.error){ throw new Error(data.error); }
+    supervisorLogged = true;
+    supervisorPassValue = pass;
+    superControls.style.display = 'block';
+    btnLogout.style.display = 'inline-block';
+    btnLogin.style.display = 'none';
+    superPass.value = '';
+    renderPending(data);
+  } catch(err){
+    alert('Acceso denegado');
+    console.error(err);
   }
+});
 
-  // Render lista de resultados (varias filas)
-  function renderSearchResults(list){
-    const rows = list.map(r => {
-      return `<tr>
-        <td class="serial">${escapeHtml(r.serial)}</td>
-        <td class="cliente">${escapeHtml(r.cliente)}</td>
-        <td class="fecha">${formatDate(r.fecha)}</td>
-        <td>${renderEstatusBadge(r.estatus)}</td>
-        <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
-      </tr>`;
-    }).join('');
-    resultArea.innerHTML = `
-      <table class="results" role="table" aria-label="Resultados">
-        <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
-    attachPdfClicks();
-  }
+btnLogout.addEventListener('click', () => {
+  supervisorLogged = false;
+  supervisorPassValue = '';
+  superControls.style.display = 'none';
+  btnLogout.style.display = 'none';
+  btnLogin.style.display = 'inline-block';
+  pendingArea.innerHTML = '';
+});
 
-  // Cargar pendientes (supervisor)
-  async function loadPending(){
-    try {
-      const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','pending');
-      url.searchParams.set('pass', supervisorPassValue);
-      const res = await fetch(url.toString());
-      if(!res.ok) throw new Error('No autorizado');
-      const data = await res.json();
-      renderPending(data);
-    } catch(err){
-      console.error(err);
-      alert('Error al cargar pendientes');
+btnRefresh.addEventListener('click', async () => {
+  if(!supervisorLogged) return alert('No autorizado');
+  await loadPending();
+});
+
+copyRow.addEventListener('click', () => {
+  const rows = resultArea.querySelectorAll('table.results tbody tr');
+  if(!rows || rows.length === 0){ alert('No hay resultados para copiar'); return; }
+  // Copia la primera fila visible
+  const row = rows[0];
+  const text = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
+  navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
+});
+
+// Buscar por serial (devuelve todas las coincidencias)
+async function searchSerial(){
+  const serial = serialInput.value.trim();
+  if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
+  status.textContent = 'Buscando...';
+  resultArea.innerHTML = '';
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','search');
+    url.searchParams.set('serial', serial);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('Error servidor');
+    const data = await res.json();
+    if(Array.isArray(data) && data.length>0){
+      renderSearchResults(data);
+      status.textContent = `${data.length} resultado(s)`;
+    } else {
+      status.textContent = 'No encontrado';
+      resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
     }
+  } catch(err){
+    console.error(err);
+    status.textContent = 'Error al buscar';
   }
+}
 
-  function renderPending(list){
-    if(!Array.isArray(list) || list.length === 0){
-      pendingArea.innerHTML = '<div class="empty">No hay pendientes</div>';
-      return;
-    }
-    const rows = list.map(item => {
-      return `<tr data-serial="${escapeAttr(item.serial)}">
-        <td style="font-weight:700">${escapeHtml(item.serial)}</td>
-        <td>${escapeHtml(item.cliente)}</td>
-        <td>${formatDate(item.fecha)}</td>
-        <td>${renderEstatusBadge(item.estatus)}</td>
-        <td>${pdfCell(item.pdfUrl)}</td>
-        <td>
-          <select class="actionSelect">
-            <option value="">-- Acción --</option>
-            <option value="AUTORIZADO">AUTORIZADO</option>
-            <option value="RECHAZADO">RECHAZADO</option>
-          </select>
-          <button class="applyBtn" style="margin-left:6px" data-serial="${escapeAttr(item.serial)}">Aplicar</button>
-        </td>
-      </tr>`;
-    }).join('');
-    pendingArea.innerHTML = `<table class="results"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table>`;
-    attachPendingListeners();
-    attachPdfClicks();
+// Render lista de resultados (varias filas)
+function renderSearchResults(list){
+  const rows = list.map(r => {
+    return `<tr>
+      <td class="serial">${escapeHtml(r.serial)}</td>
+      <td class="cliente">${escapeHtml(r.cliente)}</td>
+      <td class="fecha">${formatDate(r.fecha)}</td>
+      <td>${renderEstatusBadge(r.estatus)}</td>
+      <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
+    </tr>`;
+  }).join('');
+  resultArea.innerHTML = `
+    <table class="results" role="table" aria-label="Resultados">
+      <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  attachPdfClicks();
+}
+
+// Cargar pendientes (supervisor)
+async function loadPending(){
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','pending');
+    url.searchParams.set('pass', supervisorPassValue);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('No autorizado');
+    const data = await res.json();
+    renderPending(data);
+  } catch(err){
+    console.error(err);
+    alert('Error al cargar pendientes');
   }
+}
 
-  // Añadir listeners a botones aplicar
-  function attachPendingListeners(){
-    pendingArea.querySelectorAll('.applyBtn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const tr = e.target.closest('tr');
-        const serial = tr.dataset.serial;
-        const select = tr.querySelector('.actionSelect');
-        const action = select.value;
-        if(!action) return alert('Selecciona una acción');
-        const autorizador = autorizaSelect.value || '';
-        if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
+function renderPending(list){
+  if(!Array.isArray(list) || list.length === 0){
+    pendingArea.innerHTML = '<div class="empty">No hay pendientes</div>';
+    return;
+  }
+  const rows = list.map(item => {
+    return `<tr data-serial="${escapeAttr(item.serial)}">
+      <td style="font-weight:700">${escapeHtml(item.serial)}</td>
+      <td>${escapeHtml(item.cliente)}</td>
+      <td>${formatDate(item.fecha)}</td>
+      <td>${renderEstatusBadge(item.estatus)}</td>
+      <td>${pdfCell(item.pdfUrl)}</td>
+      <td>
+        <select class="actionSelect">
+          <option value="">-- Acción --</option>
+          <option value="AUTORIZADO">AUTORIZADO</option>
+          <option value="RECHAZADO">RECHAZADO</option>
+        </select>
+        <button class="applyBtn" style="margin-left:6px" data-serial="${escapeAttr(item.serial)}">Aplicar</button>
+      </td>
+    </tr>`;
+  }).join('');
+  pendingArea.innerHTML = `<table class="results"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table>`;
+  attachPendingListeners();
+  attachPdfClicks();
+}
 
-        // Llamada GET para evitar CORS: action=update
-        try {
-          const url = new URL(WEBAPP_URL);
-          url.searchParams.set('action','update');
-          url.searchParams.set('serial', serial);
-          url.searchParams.set('newStatus', action);
-          url.searchParams.set('autorizador', autorizador);
-          url.searchParams.set('pass', supervisorPassValue);
-          const res = await fetch(url.toString());
-          if(!res.ok) throw new Error('Error servidor');
-          const data = await res.json();
-          if(data && data.ok){
-            alert('Actualizado');
-            await loadPending();
-          } else {
-            alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
-          }
-        } catch(err){
-          console.error(err);
-          alert('Error al actualizar');
+// Añadir listeners a botones aplicar
+function attachPendingListeners(){
+  pendingArea.querySelectorAll('.applyBtn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const tr = e.target.closest('tr');
+      const serial = tr.dataset.serial;
+      const select = tr.querySelector('.actionSelect');
+      const action = select.value;
+      if(!action) return alert('Selecciona una acción');
+      const autorizador = autorizaSelect.value || '';
+      if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
+      // Llamada GET para evitar CORS: action=update
+      try {
+        const url = new URL(WEBAPP_URL);
+        url.searchParams.set('action','update');
+        url.searchParams.set('serial', serial);
+        url.searchParams.set('newStatus', action);
+        url.searchParams.set('autorizador', autorizador);
+        url.searchParams.set('pass', supervisorPassValue);
+        const res = await fetch(url.toString());
+        if(!res.ok) throw new Error('Error servidor');
+        const data = await res.json();
+        if(data && data.ok){
+          alert('Actualizado');
+          await loadPending();
+        } else {
+          alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
         }
-      });
-    });
-  }
-
-  // Render badge de estatus
-  function renderEstatusBadge(text){
-    const t = (text || '').toString().toUpperCase();
-    const cls = t === 'AUTORIZADO' ? 'autorizado' : (t === 'RECHAZADO' ? 'rechazado' : 'pendiente');
-    return `<span class="estatus ${cls}">${escapeHtml(t || '—')}</span>`;
-  }
-
-  // Celda PDF con preview (intenta Drive preview)
-  function pdfCell(url){
-    if(!url) return '<div style="color:var(--muted)">Sin PDF</div>';
-    const preview = transformToPreviewUrl(url);
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-      <div class="pdf-preview" data-url="${escapeAttr(url)}"><iframe src="${escapeAttr(preview)}"></iframe></div>
-      <a href="${escapeAttr(url)}" target="_blank" rel="noopener">Abrir</a>
-    </div>`;
-  }
-
-  // Transformar enlaces de Drive a preview o devolver PDF directo
-  function transformToPreviewUrl(raw){
-    try {
-      const u = new URL(raw);
-      if(u.hostname.includes('drive.google.com')){
-        const m = raw.match(/\/file\/d\/([^\/]+)\/?/);
-        if(m && m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`;
-        const id = u.searchParams.get('id');
-        if(id) return `https://drive.google.com/file/d/${id}/preview`;
+      } catch(err){
+        console.error(err);
+        alert('Error al actualizar');
       }
-      if(raw.toLowerCase().endsWith('.pdf')) return raw;
-      return raw;
-    } catch(e){ return raw; }
-  }
-
-  // Añadir click para abrir PDF en nueva pestaña
-  function attachPdfClicks(){
-    document.querySelectorAll('.pdf-preview').forEach(el => {
-      el.addEventListener('click', (e) => {
-        const url = el.dataset.url;
-        if(url) window.open(url, '_blank');
-      });
     });
+  });
+}
+
+// Render badge de estatus
+function renderEstatusBadge(text){
+  const t = (text || '').toString().toUpperCase();
+  const cls = t === 'AUTORIZADO' ? 'autorizado' : (t === 'RECHAZADO' ? 'rechazado' : 'pendiente');
+  return `<span class="estatus ${cls}">${escapeHtml(t || '—')}</span>`;
+}
+
+// Celda PDF con preview (intenta Drive preview)
+function pdfCell(url){
+  if(!url) return '<div style="color:var(--brand-gray)">Sin PDF</div>';
+  const preview = transformToPreviewUrl(url);
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div class="pdf-preview" data-url="${escapeAttr(url)}"><iframe src="${escapeAttr(preview)}"></iframe></div>
+    <a href="${escapeAttr(url)}" target="_blank" rel="noopener">Abrir</a>
+  </div>`;
+}
+
+// Transformar enlaces de Drive a preview o devolver PDF directo
+function transformToPreviewUrl(raw){
+  try {
+    const u = new URL(raw);
+    if(u.hostname.includes('drive.google.com')){
+      const m = raw.match(/\/file\/d\/([^\/]+)\/?/);
+      if(m && m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`;
+      const id = u.searchParams.get('id');
+      if(id) return `https://drive.google.com/file/d/${id}/preview`;
+    }
+    if(raw.toLowerCase().endsWith('.pdf')) return raw;
+    return raw;
+  } catch(e){ return raw; }
+}
+
+// Añadir click para abrir PDF en nueva pestaña
+function attachPdfClicks(){
+  document.querySelectorAll('.pdf-preview').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const url = el.dataset.url;
+      if(url) window.open(url, '_blank');
+    });
+  });
+}
+
+// Formato de fecha: maneja Date(...) de gviz, ISO o texto
+function formatDate(raw){
+  if(!raw) return '';
+  if(typeof raw === 'string' && raw.startsWith('Date(')){
+    const nums = raw.replace(/^Date\(|\)$/g,'').split(',').map(s=>s.trim());
+    const y = Number(nums[0]||0), m = Number(nums[1]||0), d = Number(nums[2]||1), hh = Number(nums[3]||0), mm = Number(nums[4]||0);
+    const dt = new Date(y, m, d, hh, mm);
+    return dt.toLocaleString();
   }
-
-  // Formato de fecha: maneja Date(...) de gviz, ISO o texto
-  function formatDate(raw){
-    if(!raw) return '';
-    if(typeof raw === 'string' && raw.startsWith('Date(')){
-      const nums = raw.replace(/^Date\(|\)$/g,'').split(',').map(s=>s.trim());
-      const y = Number(nums[0]||0), m = Number(nums[1]||0), d = Number(nums[2]||1), hh = Number(nums[3]||0), mm = Number(nums[4]||0);
-      const dt = new Date(y, m, d, hh, mm);
-      return dt.toLocaleString();
-    }
-    if(typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(raw)){
-      const dt = new Date(raw);
-      return dt.toLocaleString();
-    }
-    if(raw instanceof Object && raw.toString && raw.toString().includes('Date')) {
-      try { return new Date(raw).toLocaleString(); } catch(e) {}
-    }
-    return String(raw);
+  if(typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(raw)){
+    const dt = new Date(raw);
+    return dt.toLocaleString();
   }
+  if(raw instanceof Object && raw.toString && raw.toString().includes('Date')) {
+    try { return new Date(raw).toLocaleString(); } catch(e) {}
+  }
+  return String(raw);
+}
 
-  // Escapes
-  function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+// Escapes
+function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
 
-  // Auto-focus
-  serialInput.focus();
+// Auto-focus
+serialInput.focus();
 </script>
 </body>
 </html>
