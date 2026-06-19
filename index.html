@@ -483,10 +483,43 @@ function showDetailsFromBtn(btn){
   }
 }
 
-// Construye y muestra el modal con todos los campos disponibles del registro
+/*
+  showDetails(record)
+  - Muestra en el modal los valores de las columnas A..X (24 columnas)
+  - Intenta leer los datos en varias formas:
+    1) record['A'] .. record['X']
+    2) record[0] .. record[23] (si record es array o tiene índices)
+    3) record['col0'] .. record['col23']
+    4) propiedades con nombres legibles (serial, cliente, email, etc.) se muestran también
+  - Si no hay datos, se mostrará vacío para esa columna.
+*/
 function showDetails(record){
-  // Campos comunes que queremos mostrar con etiquetas claras
-  const fields = [
+  // Helper para obtener valor de columna por índice (0..23) o letra (A..X)
+  function getByIndexOrKey(obj, idx){
+    if(!obj) return '';
+    // 1) Try letter key A..X
+    const letter = String.fromCharCode(65 + idx); // 65='A'
+    if(obj.hasOwnProperty(letter) && obj[letter] !== null && obj[letter] !== undefined) return obj[letter];
+    // 2) Try numeric index (array-like)
+    if(Array.isArray(obj) && obj.length > idx && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
+    if(obj.hasOwnProperty(idx) && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
+    // 3) Try col0..col23
+    const colKey = 'col' + idx;
+    if(obj.hasOwnProperty(colKey) && obj[colKey] !== null && obj[colKey] !== undefined) return obj[colKey];
+    // 4) Try spreadsheet style 'C1','C2' etc (less likely) - skip
+    return '';
+  }
+
+  // Build table for columns A..X
+  const cols = [];
+  for(let i=0;i<24;i++){
+    const letter = String.fromCharCode(65 + i); // A..X
+    const val = getByIndexOrKey(record, i);
+    cols.push({ letter, index: i, value: val });
+  }
+
+  // Also include common named fields (if present) for quick validation
+  const namedFields = [
     {k:'serial', label:'Número de serie'},
     {k:'cliente', label:'Cliente'},
     {k:'usuario', label:'Usuario que cargó'},
@@ -502,25 +535,39 @@ function showDetails(record){
     {k:'pdfUrl', label:'Enlace PDF'}
   ];
 
-  // Build HTML
-  let html = `<div class="grid">`;
-  fields.forEach(f => {
-    const val = record[f.k] !== undefined && record[f.k] !== null ? record[f.k] : '';
+  // Start building HTML
+  let html = '';
+
+  // Section: quick named fields (if any exist)
+  html += '<div class="grid">';
+  namedFields.forEach(f => {
+    const rawVal = record && (record[f.k] !== undefined && record[f.k] !== null) ? record[f.k] : '';
     let display = '';
     if(f.k === 'pdfUrl'){
-      display = val ? `<a href="${escapeAttr(val)}" target="_blank" rel="noopener">Abrir PDF</a>` : '<span class="small">Sin PDF</span>';
+      display = rawVal ? `<a href="${escapeAttr(rawVal)}" target="_blank" rel="noopener">Abrir PDF</a>` : '<span class="small">Sin PDF</span>';
     } else if(f.k === 'fecha' || f.k === 'fechaCarga' || f.k === 'fechaDecision'){
-      display = `<span>${escapeHtml(formatDate(val))}</span>`;
+      display = `<span>${escapeHtml(formatDate(rawVal))}</span>`;
     } else if(f.k === 'descripcion'){
-      display = `<span style="white-space:pre-wrap">${escapeHtml(String(val))}</span>`;
+      display = `<span style="white-space:pre-wrap">${escapeHtml(String(rawVal))}</span>`;
     } else {
-      display = `<span>${escapeHtml(String(val))}</span>`;
+      display = `<span>${escapeHtml(String(rawVal))}</span>`;
     }
     html += `<div class="detail-row"><strong>${f.label}</strong>${display}</div>`;
   });
-  html += `</div>`;
+  html += '</div>';
 
-  // Additional: show raw JSON for audit if needed
+  // Separator
+  html += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:12px 0">';
+
+  // Section: Columns A..X table
+  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Col</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Índice</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Valor</th></tr></thead><tbody>';
+  cols.forEach(c => {
+    const displayVal = c.value === null || c.value === undefined || c.value === '' ? '<span class="small">— vacío —</span>' : escapeHtml(String(c.value));
+    html += `<tr><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:60px">${c.letter}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:60px">${c.index}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);">${displayVal}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  // Raw JSON for audit
   html += `<div style="margin-top:12px" class="detail-row"><strong>Registro (JSON)</strong><span style="font-weight:400;color:var(--brand-gray);font-size:13px;display:block;white-space:pre-wrap">${escapeHtml(JSON.stringify(record, null, 2))}</span></div>`;
 
   modalContent.innerHTML = html;
