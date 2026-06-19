@@ -319,7 +319,6 @@ async function searchSerial(){
 // Render lista de resultados (varias filas) - ahora con más columnas y botón "Ver detalles"
 function renderSearchResults(list){
   const rows = list.map(r => {
-    // r puede contener campos adicionales: email, telefono, modelo, descripcion, usuario, fechaCarga, pdfUrl
     return `<tr>
       <td class="serial">${escapeHtml(r.serial)}</td>
       <td class="cliente">${escapeHtml(r.cliente)}</td>
@@ -484,94 +483,158 @@ function showDetailsFromBtn(btn){
 }
 
 /*
-  showDetails(record)
-  - Muestra en el modal los valores de las columnas A..X (24 columnas)
-  - Intenta leer los datos en varias formas:
-    1) record['A'] .. record['X']
-    2) record[0] .. record[23] (si record es array o tiene índices)
-    3) record['col0'] .. record['col23']
-    4) propiedades con nombres legibles (serial, cliente, email, etc.) se muestran también
-  - Si no hay datos, se mostrará vacío para esa columna.
+  Mapeo solicitado (A..X):
+  A: Marca temporal
+  B: Dirección de correo electrónico
+  C: Tipo de Solicitud
+  D: Factura de compra de la unidad
+  E: Nombre del cliente
+  F: Correo del cliente
+  G: Numero celular del cliente
+  H: Modelo de la Unidad
+  I: Número de Serie (VIN)
+  J: Fecha de Factura
+  K: Fecha de entrega de la unidad
+  L: Ticket de AYA
+  M: Evidencia de entrega
+  N: Número de Ticket de Reparación
+  O: Evidencia de que la moto estuvo en taller
+  P: Fecha de ingreso al taller
+  Q: Fecha de salida del taller
+  R: FOLIO
+  S: Fecha Límite Servicio
+  T: ESTATUS
+  U: Fecha de aprobación
+  V: AUTORIZADO POR
+  W: Comentarios
+  X: Link_PDF
 */
 function showDetails(record){
-  // Helper para obtener valor de columna por índice (0..23) o letra (A..X)
-  function getByIndexOrKey(obj, idx){
+  // Helper: intenta obtener valor por varias formas
+  function getVal(obj, idx){
     if(!obj) return '';
-    // 1) Try letter key A..X
-    const letter = String.fromCharCode(65 + idx); // 65='A'
-    if(obj.hasOwnProperty(letter) && obj[letter] !== null && obj[letter] !== undefined) return obj[letter];
-    // 2) Try numeric index (array-like)
+    const letter = String.fromCharCode(65 + idx); // 'A'..'X'
+    // 1) letra 'A'..'X'
+    if(Object.prototype.hasOwnProperty.call(obj, letter) && obj[letter] !== null && obj[letter] !== undefined) return obj[letter];
+    // 2) array index
     if(Array.isArray(obj) && obj.length > idx && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
-    if(obj.hasOwnProperty(idx) && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
-    // 3) Try col0..col23
+    // 3) numeric property '0'..'23'
+    if(Object.prototype.hasOwnProperty.call(obj, idx) && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
+    // 4) col0..col23
     const colKey = 'col' + idx;
-    if(obj.hasOwnProperty(colKey) && obj[colKey] !== null && obj[colKey] !== undefined) return obj[colKey];
-    // 4) Try spreadsheet style 'C1','C2' etc (less likely) - skip
+    if(Object.prototype.hasOwnProperty.call(obj, colKey) && obj[colKey] !== null && obj[colKey] !== undefined) return obj[colKey];
+    // 5) spreadsheet-style keys like 'A1' etc (no index) - skip
     return '';
   }
 
-  // Build table for columns A..X
-  const cols = [];
-  for(let i=0;i<24;i++){
-    const letter = String.fromCharCode(65 + i); // A..X
-    const val = getByIndexOrKey(record, i);
-    cols.push({ letter, index: i, value: val });
-  }
-
-  // Also include common named fields (if present) for quick validation
-  const namedFields = [
-    {k:'serial', label:'Número de serie'},
-    {k:'cliente', label:'Cliente'},
-    {k:'usuario', label:'Usuario que cargó'},
-    {k:'email', label:'Email'},
-    {k:'telefono', label:'Teléfono'},
-    {k:'modelo', label:'Modelo'},
-    {k:'descripcion', label:'Descripción / Observaciones'},
-    {k:'fechaCarga', label:'Fecha de carga'},
-    {k:'fecha', label:'Fecha (registro)'},
-    {k:'estatus', label:'Estatus'},
-    {k:'autorizador', label:'Autorizador'},
-    {k:'fechaDecision', label:'Fecha decisión'},
-    {k:'pdfUrl', label:'Enlace PDF'}
+  // Etiquetas solicitadas en orden A..X
+  const labels = [
+    'Marca temporal', // A
+    'Dirección de correo electrónico', // B
+    'Tipo de Solicitud', // C
+    'Factura de compra de la unidad', // D
+    'Nombre del cliente', // E
+    'Correo del cliente', // F
+    'Numero celular del cliente', // G
+    'Modelo de la Unidad', // H
+    'Número de Serie (VIN)', // I
+    'Fecha de Factura', // J
+    'Fecha de entrega de la unidad', // K
+    'Ticket de AYA', // L
+    'Evidencia de entrega', // M
+    'Número de Ticket de Reparación', // N
+    'Evidencia de que la moto estuvo en taller', // O
+    'Fecha de ingreso al taller', // P
+    'Fecha de salida del taller', // Q
+    'FOLIO', // R
+    'Fecha Límite Servicio', // S
+    'ESTATUS', // T
+    'Fecha de aprobación', // U
+    'AUTORIZADO POR', // V
+    'Comentarios', // W
+    'Link_PDF' // X
   ];
 
-  // Start building HTML
-  let html = '';
-
-  // Section: quick named fields (if any exist)
-  html += '<div class="grid">';
-  namedFields.forEach(f => {
-    const rawVal = record && (record[f.k] !== undefined && record[f.k] !== null) ? record[f.k] : '';
-    let display = '';
-    if(f.k === 'pdfUrl'){
-      display = rawVal ? `<a href="${escapeAttr(rawVal)}" target="_blank" rel="noopener">Abrir PDF</a>` : '<span class="small">Sin PDF</span>';
-    } else if(f.k === 'fecha' || f.k === 'fechaCarga' || f.k === 'fechaDecision'){
-      display = `<span>${escapeHtml(formatDate(rawVal))}</span>`;
-    } else if(f.k === 'descripcion'){
-      display = `<span style="white-space:pre-wrap">${escapeHtml(String(rawVal))}</span>`;
-    } else {
-      display = `<span>${escapeHtml(String(rawVal))}</span>`;
-    }
-    html += `<div class="detail-row"><strong>${f.label}</strong>${display}</div>`;
+  // Construir HTML del modal
+  let html = '<div class="grid">';
+  // Mostrar primero algunos campos clave (si existen) para validación rápida
+  const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
+  quickKeys.forEach(k => {
+    const val = record && (record[k] !== undefined && record[k] !== null) ? record[k] : '';
+    html += `<div class="detail-row"><strong>${k.charAt(0).toUpperCase()+k.slice(1)}</strong><span>${escapeHtml(formatDateIfNeeded(val))}</span></div>`;
   });
   html += '</div>';
 
-  // Separator
   html += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:12px 0">';
 
-  // Section: Columns A..X table
-  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Col</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Índice</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Valor</th></tr></thead><tbody>';
-  cols.forEach(c => {
-    const displayVal = c.value === null || c.value === undefined || c.value === '' ? '<span class="small">— vacío —</span>' : escapeHtml(String(c.value));
-    html += `<tr><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:60px">${c.letter}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:60px">${c.index}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);">${displayVal}</td></tr>`;
-  });
+  // Tabla con A..X
+  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Col</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Etiqueta</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Valor</th></tr></thead><tbody>';
+  for(let i=0;i<24;i++){
+    const letter = String.fromCharCode(65 + i);
+    let val = getVal(record, i);
+
+    // Si no se encontró en las formas genéricas, intentar nombres comunes que puedan mapear a ese campo
+    if((val === '' || val === null) && record){
+      // Mapeos heurísticos por índice (nombres comunes)
+      const heuristics = {
+        0: ['timestamp','marcaTemporal','marca_tiempo','fechaCarga'],
+        1: ['email','direccion_email','direccionCorreo','correoRemitente'],
+        2: ['tipoSolicitud','tipo_solicitud'],
+        3: ['factura','facturaCompra','factura_unidad'],
+        4: ['cliente','nombreCliente','nombre_del_cliente'],
+        5: ['correoCliente','emailCliente','correo_cliente'],
+        6: ['telefono','celular','numeroCelular','telefonoCliente'],
+        7: ['modelo','modeloUnidad','modelo_moto'],
+        8: ['vin','numeroSerie','numero_de_serie','serie'],
+        9: ['fechaFactura','fecha_de_factura'],
+        10: ['fechaEntrega','fecha_entrega'],
+        11: ['ticketAYA','ticket_aya','ticket'],
+        12: ['evidenciaEntrega','evidencia_entrega'],
+        13: ['ticketReparacion','ticket_reparacion'],
+        14: ['evidenciaTaller','evidencia_taller'],
+        15: ['fechaIngresoTaller','fecha_ingreso_taller'],
+        16: ['fechaSalidaTaller','fecha_salida_taller'],
+        17: ['folio','FOLIO'],
+        18: ['fechaLimiteServicio','fecha_limite_servicio'],
+        19: ['estatus','ESTATUS','status'],
+        20: ['fechaAprobacion','fecha_aprobacion'],
+        21: ['autorizadoPor','autorizado_por','autorizador'],
+        22: ['comentarios','observaciones','notes','comentario'],
+        23: ['link_pdf','linkPdf','pdfUrl','Link_PDF']
+      };
+      const keys = heuristics[i] || [];
+      for(const k of keys){
+        if(Object.prototype.hasOwnProperty.call(record,k) && record[k] !== null && record[k] !== undefined){
+          val = record[k];
+          break;
+        }
+      }
+    }
+
+    // Formatear fechas si aplica
+    const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
+    html += `<tr><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:48px">${letter}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:320px">${escapeHtml(labels[i])}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);">${display}</td></tr>`;
+  }
   html += '</tbody></table></div>';
 
-  // Raw JSON for audit
+  // Raw JSON para auditoría
   html += `<div style="margin-top:12px" class="detail-row"><strong>Registro (JSON)</strong><span style="font-weight:400;color:var(--brand-gray);font-size:13px;display:block;white-space:pre-wrap">${escapeHtml(JSON.stringify(record, null, 2))}</span></div>`;
 
   modalContent.innerHTML = html;
   openModal();
+}
+
+// Helpers para detectar/formatar fechas
+function isLikelyDate(v){
+  if(!v) return false;
+  if(typeof v === 'string' && (/^\d{4}-\d{2}-\d{2}T/.test(v) || /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(v) || v.startsWith('Date('))) return true;
+  if(typeof v === 'number') return true;
+  return false;
+}
+function formatDateIfNeeded(v){
+  if(!v) return '';
+  if(isLikelyDate(v)) return formatDate(v);
+  return String(v);
 }
 
 // Formato de fecha: maneja Date(...) de gviz, ISO o texto
@@ -587,7 +650,13 @@ function formatDate(raw){
     const dt = new Date(raw);
     return dt.toLocaleString();
   }
+  if(typeof raw === 'string' && /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(raw)){
+    return raw;
+  }
   if(raw instanceof Object && raw.toString && raw.toString().includes('Date')) {
+    try { return new Date(raw).toLocaleString(); } catch(e) {}
+  }
+  if(typeof raw === 'number'){
     try { return new Date(raw).toLocaleString(); } catch(e) {}
   }
   return String(raw);
