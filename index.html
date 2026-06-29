@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>BD Extension de garantias — Panel</title>
+<title>BD Extensión de garantías — Panel</title>
+
 <style>
 :root{
   --brand-white: #FFFFFF;
@@ -15,45 +16,46 @@
   --radius: 12px;
   --shadow-soft: 0 10px 30px rgba(35,31,32,0.06);
   --glass: rgba(255,255,255,0.6);
-  font-family: "Segoe UI", Inter, system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 }
 
-/* Layout base */
+/* Reset & layout */
+*{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg-soft);color:var(--brand-black);-webkit-font-smoothing:antialiased;}
-body{display:flex;justify-content:center;padding:36px;}
+body{display:flex;justify-content:center;padding:28px;}
 .wrap{width:100%;max-width:1200px;padding:8px;}
 
 /* Appbar */
-header.appbar{display:flex;align-items:center;gap:18px;margin-bottom:20px}
+header.appbar{display:flex;align-items:center;gap:18px;margin-bottom:18px}
 .brand{display:flex;align-items:center;gap:14px}
 .logo{
-  width:64px;height:64px;border-radius:12px;
+  width:56px;height:56px;border-radius:12px;
   background:linear-gradient(135deg, rgba(242,143,23,0.95), rgba(35,31,32,0.08));
   display:flex;align-items:center;justify-content:center;color:var(--brand-white);
-  font-weight:800;font-size:26px;box-shadow:var(--shadow-soft);
+  font-weight:800;font-size:22px;box-shadow:var(--shadow-soft);
   border:2px solid rgba(35,31,32,0.04);
 }
 
 /* Typography */
-h1{margin:0;font-size:38px;font-weight:700;color:var(--brand-black);line-height:1}
-.subtitle{margin:0;color:var(--brand-gray);font-size:20px;font-weight:600}
+h1{margin:0;font-size:22px;font-weight:800;color:var(--brand-black);line-height:1}
+.subtitle{margin:0;color:var(--brand-gray);font-size:13px;font-weight:600}
 
 /* Card principal */
 .card{
   background:var(--card-bg);
   border-radius:var(--radius);
-  padding:22px;
+  padding:18px;
   box-shadow:var(--shadow-soft);
   border:1px solid rgba(35,31,32,0.04);
 }
 
 /* Controls */
-.controls{display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap}
-.input{flex:1;min-width:260px;display:flex;gap:8px;align-items:center}
+.controls{display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.input{flex:1;min-width:220px;display:flex;gap:8px;align-items:center}
 input[type="text"], input[type="password"], select{
-  width:100%;padding:14px 16px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);
-  font-size:16px;background:linear-gradient(180deg, #fff, #fbfbfb);color:var(--brand-black);
-  outline:none;box-shadow:none;
+  width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);
+  font-size:15px;background:linear-gradient(180deg, #fff, #fbfbfb);color:var(--brand-black);
+  outline:none;
 }
 input[type="text"]:focus, input[type="password"]:focus{
   box-shadow:0 8px 24px rgba(242,143,23,0.08);border-color:var(--brand-accent);
@@ -61,8 +63,8 @@ input[type="text"]:focus, input[type="password"]:focus{
 
 /* Buttons */
 .btn{
-  background:var(--brand-accent);color:var(--brand-white);border:0;padding:11px 16px;border-radius:10px;
-  cursor:pointer;font-weight:700;font-size:15px;box-shadow:0 6px 18px rgba(242,143,23,0.12);
+  background:var(--brand-accent);color:var(--brand-white);border:0;padding:10px 14px;border-radius:10px;
+  cursor:pointer;font-weight:700;font-size:14px;box-shadow:0 6px 18px rgba(242,143,23,0.12);
 }
 .btn.ghost{
   background:transparent;color:var(--brand-black);border:1px solid rgba(35,31,32,0.08);
@@ -73,13 +75,13 @@ input[type="text"]:focus, input[type="password"]:focus{
 }
 
 /* Meta text */
-.meta{margin-top:10px;color:var(--brand-gray);font-size:14px}
+.meta{margin-top:10px;color:var(--brand-gray);font-size:13px}
 
-/* Resultados */
-.result-area{margin-top:18px}
-table.results{width:100%;border-collapse:collapse;margin-top:14px;background:var(--card-bg);box-shadow:0 8px 24px rgba(35,31,32,0.04);border-radius:10px;overflow:hidden}
+/* Results table */
+.result-area{margin-top:14px;overflow:auto}
+table.results{width:100%;border-collapse:collapse;margin-top:8px;background:var(--card-bg);box-shadow:0 8px 24px rgba(35,31,32,0.04);border-radius:10px;overflow:hidden;min-width:900px}
 table.results thead th{padding:12px 14px;text-align:left;font-size:13px;color:var(--brand-black);background:linear-gradient(180deg, rgba(242,143,23,0.04), transparent);border-bottom:1px solid rgba(35,31,32,0.04)}
-table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0.03);vertical-align:middle;font-size:14px}
+table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0.03);vertical-align:middle;font-size:13px}
 
 /* Column styles */
 .serial{font-weight:800;color:var(--brand-accent)}
@@ -87,557 +89,284 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .fecha{color:var(--brand-gray);font-size:13px}
 
 /* Badges */
-.estatus{display:inline-block;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:800;color:var(--brand-white)}
+.estatus{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;color:var(--brand-white)}
 .estatus.autorizado{background:linear-gradient(90deg,#16a34a,#059669)}
 .estatus.rechazado{background:#ef4444}
 .estatus.pendiente{background:linear-gradient(90deg,#f59e0b,#f28f17)}
 
 /* PDF preview */
 .pdf-cell{width:160px;text-align:center}
-.pdf-preview{width:120px;height:150px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
+.pdf-preview{width:120px;height:140px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
 .pdf-preview iframe{width:100%;height:100%;border:0}
 
 /* Empty state */
-.empty{padding:28px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
+.empty{padding:22px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
 
-/* Supervisor panel */
-.super-panel{margin-top:18px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(35,31,32,0.04)}
-.form-row{display:flex;gap:10px;align-items:center}
+/* Supervisor overlay (full-screen) */
+.super-overlay{
+  position:fixed;inset:0;z-index:2000;background:var(--bg-soft);display:none;flex-direction:column;padding:20px;
+}
+.super-top{
+  display:flex;align-items:center;gap:12px;margin-bottom:12px;
+}
+.super-main{flex:1;display:flex;gap:12px;overflow:hidden}
+.super-left{width:48%;background:var(--card-bg);border-radius:12px;padding:12px;overflow:auto;border:1px solid rgba(35,31,32,0.04)}
+.super-right{flex:1;background:var(--card-bg);border-radius:12px;padding:12px;overflow:auto;border:1px solid rgba(35,31,32,0.04)}
+.super-actions{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));padding:12px;display:flex;gap:8px;align-items:center;justify-content:flex-end;border-top:1px solid rgba(35,31,32,0.04)}
 
-/* Details modal */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:1200}
-.modal{width:920px;max-width:95%;background:var(--card-bg);border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(35,31,32,0.25);border:1px solid rgba(35,31,32,0.06);max-height:80vh;overflow:auto}
-.modal h3{margin:0 0 8px 0;font-size:20px;color:var(--brand-black)}
-.modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.detail-row{background:linear-gradient(180deg,#fff,#fbfbff);padding:10px;border-radius:8px;border:1px solid rgba(35,31,32,0.03)}
-.detail-row strong{display:block;color:var(--brand-gray);font-size:12px;margin-bottom:6px}
-.detail-row span{color:var(--brand-black);font-weight:700}
+/* Pending table inside supervisor */
+.pending-table{width:100%;border-collapse:collapse}
+.pending-table thead th{padding:10px;font-size:13px;text-align:left;color:var(--brand-gray);border-bottom:1px solid rgba(35,31,32,0.04)}
+.pending-table td{padding:8px;border-bottom:1px solid rgba(35,31,32,0.03);font-size:13px}
+
+/* Split details modal inside supervisor */
+.split-modal{display:flex;gap:12px;height:80vh}
+.split-left{width:40%;overflow:auto;border-radius:8px;padding:10px;border:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,#fff,#fbfbff)}
+.split-right{flex:1;border-radius:8px;padding:10px;border:1px solid rgba(35,31,32,0.04);display:flex;flex-direction:column}
+.split-left .field{padding:8px;border-bottom:1px solid rgba(35,31,32,0.03)}
+.split-left .field strong{display:block;color:var(--brand-gray);font-size:12px;margin-bottom:6px}
+.split-left .field span{color:var(--brand-black);font-weight:700;word-break:break-word}
+
+/* Fixed bottom action bar inside details */
+.detail-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px;border-top:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.98))}
 
 /* Small helpers */
 .small{font-size:13px;color:var(--brand-gray)}
 .actions-cell{display:flex;gap:8px;align-items:center}
 
 /* Responsive */
-@media (max-width:900px){
-  .logo{width:56px;height:56px;font-size:22px}
-  h1{font-size:32px}
-  .pdf-preview{width:100px;height:120px}
-  .modal{width:720px}
-  .modal .grid{grid-template-columns:1fr}
+@media (max-width:1000px){
+  table.results{min-width:800px}
+  .super-left{width:45%}
 }
-@media (max-width:640px){
-  .controls{flex-direction:column;align-items:stretch}
-  .form-row{flex-direction:column;align-items:stretch}
+@media (max-width:760px){
+  body{padding:12px}
+  .logo{width:48px;height:48px}
+  .wrap{padding:6px}
+  table.results{min-width:700px}
+  .super-main{flex-direction:column}
+  .super-left{width:100%}
+  .super-right{width:100%}
+  .split-modal{flex-direction:column;height:70vh}
+  .split-left{width:100%}
+  .split-right{width:100%}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-<header class="appbar">
-  <div class="brand">
-    <div class="logo" aria-hidden>V</div>
-    <div>
-      <h1>BD Extension de garantias</h1>
-      <p class="subtitle">Buscar por número de serie • Panel supervisor</p>
-    </div>
-  </div>
-  <div style="margin-left:auto" class="meta">Interfaz Vento</div>
-</header>
-
-<div class="card" role="main">
-  <div>
-    <strong>Búsqueda por número de serie</strong>
-    <div class="controls" style="margin-top:10px">
-      <div class="input">
-        <input id="serial" type="text" placeholder="Ejemplo: 12345-ABC" aria-label="Número de serie" />
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="btnSearch" class="btn">Buscar</button>
-        <button id="btnClear" class="btn ghost">Limpiar</button>
-        <button id="copyRow" class="copy-btn" title="Copiar fila visible">Copiar</button>
-      </div>
-    </div>
-
-    <p id="status" class="meta"></p>
-    <div id="resultArea" class="result-area"></div>
-  </div>
-
-  <div class="super-panel" id="superPanel">
-    <strong>Panel Supervisor</strong>
-    <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y autorizar/rechazar. Usa "Ver detalles" para validar la información cargada antes de aprobar.</p>
-
-    <div class="form-row" style="margin-top:10px">
-      <input id="superPass" type="password" placeholder="Contraseña supervisor" />
-      <button id="btnLogin" class="btn">Entrar</button>
-      <button id="btnLogout" class="btn ghost" style="display:none">Salir</button>
-    </div>
-
-    <div id="superControls" style="display:none;margin-top:12px">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <label class="meta" style="margin-right:6px">Autoriza como:</label>
-        <select id="autorizaSelect">
-          <option value="CESAR">CESAR</option>
-          <option value="IVAN">IVAN</option>
-          <option value="ANGEL">ANGEL</option>
-          <option value="CECILIA">CECILIA</option>
-        </select>
-        <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
-      </div>
-      <div id="pendingArea"></div>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- Details modal -->
-<div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h3 id="modalTitle">Detalles del registro</h3>
+  <header class="appbar">
+    <div class="brand">
+      <div class="logo" aria-hidden>V</div>
       <div>
-        <button id="modalClose" class="btn ghost">Cerrar</button>
+        <h1>BD Extensión de garantías</h1>
+        <p class="subtitle">Búsqueda por número de serie • Panel supervisor</p>
       </div>
     </div>
-    <div id="modalContent" style="margin-top:12px">
-      <!-- Content injected by JS -->
+    <div style="margin-left:auto" class="meta">Interfaz Vento</div>
+  </header>
+
+  <div class="card" role="main" aria-live="polite">
+    <div>
+      <strong>Búsqueda por número de serie</strong>
+      <div class="controls" style="margin-top:10px">
+        <div class="input">
+          <input id="serial" type="text" placeholder="Ejemplo: 12345-ABC" aria-label="Número de serie" />
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="btnSearch" class="btn" title="Buscar">Buscar</button>
+          <button id="btnClear" class="btn ghost" title="Limpiar">Limpiar</button>
+          <button id="copyRow" class="copy-btn" title="Copiar fila visible">Copiar</button>
+        </div>
+      </div>
+
+      <p id="status" class="meta" aria-live="polite"></p>
+      <div id="resultArea" class="result-area" role="region" aria-label="Resultados de búsqueda"></div>
+    </div>
+
+    <div class="super-panel" id="superPanel" style="margin-top:14px">
+      <strong>Panel Supervisor</strong>
+      <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y entrar al modo supervisor profesional.</p>
+
+      <div class="form-row" style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <input id="superPass" type="password" placeholder="Contraseña supervisor" />
+        <button id="btnLogin" class="btn">Entrar (Modo Supervisor)</button>
+        <button id="btnLogout" class="btn ghost" style="display:none">Salir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Supervisor full-screen overlay -->
+<div id="superOverlay" class="super-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="logo" aria-hidden style="width:44px;height:44px;font-size:18px">V</div>
+      <div>
+        <h1 style="font-size:18px;margin:0">Modo Supervisor</h1>
+        <div class="small" id="superUserMeta">Sesión activa</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label class="small" style="margin-right:6px">Autoriza como:</label>
+      <select id="autorizaSelect">
+        <option value="CESAR">CESAR</option>
+        <option value="IVAN">IVAN</option>
+        <option value="ANGEL">ANGEL</option>
+        <option value="CECILIA">CECILIA</option>
+      </select>
+      <button id="btnExitSupervisor" class="btn ghost">Salir de Modo Supervisor</button>
+    </div>
+  </div>
+
+  <div class="super-top">
+    <div style="flex:1;display:flex;gap:8px;align-items:center">
+      <input id="superSearch" type="text" placeholder="Buscar en pendientes (serie, cliente, email, modelo...)" style="padding:10px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);flex:1" />
+      <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
+      <button id="btnCheckDuplicates" class="btn">Verificar duplicados</button>
+    </div>
+  </div>
+
+  <div class="super-main">
+    <div class="super-left" id="pendingArea" aria-label="Lista de pendientes">
+      <!-- Tabla de pendientes inyectada -->
+      <div class="small" style="margin-bottom:8px;color:var(--brand-gray)">Pendientes cargados</div>
+      <div id="pendingContainer"></div>
+    </div>
+
+    <div class="super-right" id="superRight" aria-label="Panel de trabajo">
+      <div id="workArea" style="height:100%;display:flex;flex-direction:column;gap:8px">
+        <div class="small" style="color:var(--brand-gray)">Selecciona un registro para ver detalles</div>
+        <div id="detailArea" style="flex:1;overflow:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Split details modal (used inside supervisor overlay) -->
+<div id="detailModal" style="display:none;position:fixed;inset:0;z-index:2500;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:1200px;background:var(--card-bg);border-radius:12px;box-shadow:0 20px 60px rgba(35,31,32,0.25);overflow:hidden;display:flex;flex-direction:column;height:90vh;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.04)">
+      <h3 style="margin:0;font-size:16px">Detalles del registro</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="detailClose" class="btn ghost">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="split-modal" style="padding:12px;flex:1;overflow:hidden">
+      <div class="split-left" id="splitLeft" aria-label="Campos A a X" style="overflow:auto"></div>
+      <div class="split-right" id="splitRight" style="display:flex;flex-direction:column;gap:8px">
+        <div style="flex:1;overflow:auto;border-radius:8px;overflow:hidden">
+          <iframe id="detailPdfFrame" src="" style="width:100%;height:100%;border:0"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-actions" style="padding:12px 16px;display:flex;align-items:center;justify-content:flex-end">
+      <label class="small" style="margin-right:8px">Autoriza como:</label>
+      <select id="detailAutoriza" style="margin-right:12px">
+        <option value="CESAR">CESAR</option>
+        <option value="IVAN">IVAN</option>
+        <option value="ANGEL">ANGEL</option>
+        <option value="CECILIA">CECILIA</option>
+      </select>
+      <button id="btnAuthorize" class="btn" style="background:#059669">AUTORIZAR</button>
+      <button id="btnReject" class="btn" style="background:#ef4444">RECHAZAR</button>
     </div>
   </div>
 </div>
 
 <script>
+/* ============================
+   Config / Globals
+   ============================ */
+
 // URL de tu Web App (Apps Script) desplegado
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz-kBTZySqCBfqzMSfhBo9pZ-bkuCtdhenb2B58zhjLVReWrJbOWa09oG7toE8zjSVF/exec';
-// Columnas (coinciden con el Apps Script)
-const COL_INDEX = { fecha:0, cliente:4, serial:8, estatus:19, fechaDecision:20, autorizador:21, pdf:23 };
 
-// Elementos
+// Columnas (coinciden con el Apps Script) - unifica mapeo
+const COL_INDEX = {
+  fecha: 0,
+  emailRemitente: 1,
+  tipoSolicitud: 2,
+  facturaCompra: 3,
+  cliente: 4,
+  correoCliente: 5,
+  telefonoCliente: 6,
+  modelo: 7,
+  serial: 8,
+  fechaFactura: 9,
+  fechaEntrega: 10,
+  ticketAYA: 11,
+  evidenciaEntrega: 12,
+  ticketReparacion: 13,
+  evidenciaTaller: 14,
+  fechaIngresoTaller: 15,
+  fechaSalidaTaller: 16,
+  folio: 17,
+  fechaLimiteServicio: 18,
+  estatus: 19,
+  fechaDecision: 20,
+  autorizadoPor: 21,
+  comentarios: 22,
+  pdf: 23
+};
+
+// Cached data
+let lastSearchResults = [];            // array of records from last search
+let pendingRecords = [];               // array of pending records (loaded for supervisor)
+const recordMap = new Map();           // map serial -> record (for quick lookup)
+let loading = false;
+let supervisorLogged = false;
+let supervisorPassValue = '';
+
+/* ============================
+   DOM Elements
+   ============================ */
 const serialInput = document.getElementById('serial');
 const btnSearch = document.getElementById('btnSearch');
 const btnClear = document.getElementById('btnClear');
 const status = document.getElementById('status');
 const resultArea = document.getElementById('resultArea');
 const copyRow = document.getElementById('copyRow');
+
 const superPass = document.getElementById('superPass');
 const btnLogin = document.getElementById('btnLogin');
 const btnLogout = document.getElementById('btnLogout');
-const superControls = document.getElementById('superControls');
-const pendingArea = document.getElementById('pendingArea');
-const autorizaSelect = document.getElementById('autorizaSelect');
+const btnExitSupervisor = document.getElementById('btnExitSupervisor');
+const superOverlay = document.getElementById('superOverlay');
 const btnRefresh = document.getElementById('btnRefresh');
-const modalBackdrop = document.getElementById('modalBackdrop');
-const modalContent = document.getElementById('modalContent');
-const modalClose = document.getElementById('modalClose');
+const pendingContainer = document.getElementById('pendingContainer');
+const superSearch = document.getElementById('superSearch');
+const btnCheckDuplicates = document.getElementById('btnCheckDuplicates');
+const superUserMeta = document.getElementById('superUserMeta');
+const autorizaSelect = document.getElementById('autorizaSelect');
 
-let supervisorLogged = false;
-let supervisorPassValue = '';
+const detailModal = document.getElementById('detailModal');
+const detailClose = document.getElementById('detailClose');
+const splitLeft = document.getElementById('splitLeft');
+const detailPdfFrame = document.getElementById('detailPdfFrame');
+const btnAuthorize = document.getElementById('btnAuthorize');
+const btnReject = document.getElementById('btnReject');
+const detailAutoriza = document.getElementById('detailAutoriza');
+const detailArea = document.getElementById('detailArea');
 
-// Eventos
-btnSearch.addEventListener('click', searchSerial);
-btnClear.addEventListener('click', () => { serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
-serialInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchSerial(); });
-
-btnLogin.addEventListener('click', async () => {
-  const pass = superPass.value.trim();
-  if(!pass){ alert('Introduce contraseña'); return; }
-  try {
-    // Usamos GET pending para evitar CORS
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    url.searchParams.set('pass', pass);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('No autorizado');
-    const data = await res.json();
-    if(data && data.error){ throw new Error(data.error); }
-    supervisorLogged = true;
-    supervisorPassValue = pass;
-    superControls.style.display = 'block';
-    btnLogout.style.display = 'inline-block';
-    btnLogin.style.display = 'none';
-    superPass.value = '';
-    renderPending(data);
-  } catch(err){
-    alert('Acceso denegado');
-    console.error(err);
-  }
-});
-
-btnLogout.addEventListener('click', () => {
-  supervisorLogged = false;
-  supervisorPassValue = '';
-  superControls.style.display = 'none';
-  btnLogout.style.display = 'none';
-  btnLogin.style.display = 'inline-block';
-  pendingArea.innerHTML = '';
-});
-
-btnRefresh.addEventListener('click', async () => {
-  if(!supervisorLogged) return alert('No autorizado');
-  await loadPending();
-});
-
-copyRow.addEventListener('click', () => {
-  const rows = resultArea.querySelectorAll('table.results tbody tr');
-  if(!rows || rows.length === 0){ alert('No hay resultados para copiar'); return; }
-  // Copia la primera fila visible
-  const row = rows[0];
-  const text = Array.from(row.querySelectorAll('td')).map(td => td.innerText.trim()).join('\t');
-  navigator.clipboard.writeText(text).then(()=> alert('Fila copiada al portapapeles'));
-});
-
-// Modal handlers
-modalClose.addEventListener('click', closeModal);
-modalBackdrop.addEventListener('click', (e) => { if(e.target === modalBackdrop) closeModal(); });
-function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); }
-function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); modalContent.innerHTML = ''; }
-
-// Buscar por serial (devuelve todas las coincidencias)
-async function searchSerial(){
-  const serial = serialInput.value.trim();
-  if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
-  status.textContent = 'Buscando...';
-  resultArea.innerHTML = '';
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','search');
-    url.searchParams.set('serial', serial);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('Error servidor');
-    const data = await res.json();
-    if(Array.isArray(data) && data.length>0){
-      renderSearchResults(data);
-      status.textContent = `${data.length} resultado(s)`;
-    } else {
-      status.textContent = 'No encontrado';
-      resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
-    }
-  } catch(err){
-    console.error(err);
-    status.textContent = 'Error al buscar';
-  }
+/* ============================
+   Utilities: escaping & formatting
+   ============================ */
+function escapeHtml(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
 
-// Render lista de resultados (varias filas) - ahora con más columnas y botón "Ver detalles"
-function renderSearchResults(list){
-  const rows = list.map(r => {
-    return `<tr>
-      <td class="serial">${escapeHtml(r.serial)}</td>
-      <td class="cliente">${escapeHtml(r.cliente)}</td>
-      <td class="fecha">${formatDate(r.fecha)}</td>
-      <td>${renderEstatusBadge(r.estatus)}</td>
-      <td class="small">${escapeHtml(r.usuario || '')}</td>
-      <td class="small">${escapeHtml(r.modelo || '')}</td>
-      <td class="small">${escapeHtml(r.email || '')}</td>
-      <td class="small">${escapeHtml(r.telefono || '')}</td>
-      <td class="pdf-cell">${pdfCell(r.pdfUrl)}</td>
-      <td class="actions-cell"><button class="btn ghost" data-record='${escapeAttr(JSON.stringify(r))}' onclick="showDetailsFromBtn(this)">Ver detalles</button></td>
-    </tr>`;
-  }).join('');
-  resultArea.innerHTML = `
-    <table class="results" role="table" aria-label="Resultados">
-      <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Detalles</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-  attachPdfClicks();
-}
-
-// Cargar pendientes (supervisor) - mantiene la lógica pero muestra más columnas y detalle
-async function loadPending(){
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    url.searchParams.set('pass', supervisorPassValue);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('No autorizado');
-    const data = await res.json();
-    renderPending(data);
-  } catch(err){
-    console.error(err);
-    alert('Error al cargar pendientes');
-  }
-}
-
-function renderPending(list){
-  if(!Array.isArray(list) || list.length === 0){
-    pendingArea.innerHTML = '<div class="empty">No hay pendientes</div>';
-    return;
-  }
-  const rows = list.map(item => {
-    return `<tr data-serial="${escapeAttr(item.serial)}">
-      <td style="font-weight:700">${escapeHtml(item.serial)}</td>
-      <td>${escapeHtml(item.cliente)}</td>
-      <td>${formatDate(item.fecha)}</td>
-      <td>${renderEstatusBadge(item.estatus)}</td>
-      <td>${escapeHtml(item.usuario || '')}</td>
-      <td>${escapeHtml(item.modelo || '')}</td>
-      <td>${escapeHtml(item.email || '')}</td>
-      <td>${escapeHtml(item.telefono || '')}</td>
-      <td>${pdfCell(item.pdfUrl)}</td>
-      <td>
-        <select class="actionSelect">
-          <option value="">-- Acción --</option>
-          <option value="AUTORIZADO">AUTORIZADO</option>
-          <option value="RECHAZADO">RECHAZADO</option>
-        </select>
-        <button class="applyBtn" style="margin-left:6px" data-serial="${escapeAttr(item.serial)}">Aplicar</button>
-        <button class="btn ghost" style="margin-left:6px" data-record='${escapeAttr(JSON.stringify(item))}' onclick="showDetailsFromBtn(this)">Ver detalles</button>
-      </td>
-    </tr>`;
-  }).join('');
-  pendingArea.innerHTML = `<table class="results"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table>`;
-  attachPendingListeners();
-  attachPdfClicks();
-}
-
-// Añadir listeners a botones aplicar
-function attachPendingListeners(){
-  pendingArea.querySelectorAll('.applyBtn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const tr = e.target.closest('tr');
-      const serial = tr.dataset.serial;
-      const select = tr.querySelector('.actionSelect');
-      const action = select.value;
-      if(!action) return alert('Selecciona una acción');
-      const autorizador = autorizaSelect.value || '';
-      if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
-      // Llamada GET para evitar CORS: action=update
-      try {
-        const url = new URL(WEBAPP_URL);
-        url.searchParams.set('action','update');
-        url.searchParams.set('serial', serial);
-        url.searchParams.set('newStatus', action);
-        url.searchParams.set('autorizador', autorizador);
-        url.searchParams.set('pass', supervisorPassValue);
-        const res = await fetch(url.toString());
-        if(!res.ok) throw new Error('Error servidor');
-        const data = await res.json();
-        if(data && data.ok){
-          alert('Actualizado');
-          await loadPending();
-        } else {
-          alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
-        }
-      } catch(err){
-        console.error(err);
-        alert('Error al actualizar');
-      }
-    });
-  });
-}
-
-// Render badge de estatus
-function renderEstatusBadge(text){
-  const t = (text || '').toString().toUpperCase();
-  const cls = t === 'AUTORIZADO' ? 'autorizado' : (t === 'RECHAZADO' ? 'rechazado' : 'pendiente');
-  return `<span class="estatus ${cls}">${escapeHtml(t || '—')}</span>`;
-}
-
-// Celda PDF con preview (intenta Drive preview)
-function pdfCell(url){
-  if(!url) return '<div style="color:var(--brand-gray)">Sin PDF</div>';
-  const preview = transformToPreviewUrl(url);
-  return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-    <div class="pdf-preview" data-url="${escapeAttr(url)}"><iframe src="${escapeAttr(preview)}"></iframe></div>
-    <a href="${escapeAttr(url)}" target="_blank" rel="noopener">Abrir</a>
-  </div>`;
-}
-
-// Transformar enlaces de Drive a preview o devolver PDF directo
-function transformToPreviewUrl(raw){
-  try {
-    const u = new URL(raw);
-    if(u.hostname.includes('drive.google.com')){
-      const m = raw.match(/\/file\/d\/([^\/]+)\/?/);
-      if(m && m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`;
-      const id = u.searchParams.get('id');
-      if(id) return `https://drive.google.com/file/d/${id}/preview`;
-    }
-    if(raw.toLowerCase().endsWith('.pdf')) return raw;
-    return raw;
-  } catch(e){ return raw; }
-}
-
-// Añadir click para abrir PDF en nueva pestaña
-function attachPdfClicks(){
-  document.querySelectorAll('.pdf-preview').forEach(el => {
-    // Remove previous listeners to avoid duplicates
-    el.replaceWith(el.cloneNode(true));
-  });
-  document.querySelectorAll('.pdf-preview').forEach(el => {
-    el.addEventListener('click', (e) => {
-      const url = el.dataset.url;
-      if(url) window.open(url, '_blank');
-    });
-  });
-}
-
-// Mostrar detalles desde botón (se usa en HTML inline onclick)
-function showDetailsFromBtn(btn){
-  try {
-    const raw = btn.getAttribute('data-record');
-    const obj = raw ? JSON.parse(raw) : null;
-    if(obj) showDetails(obj);
-  } catch(e){
-    console.error('Error parsing record for details', e);
-    alert('No se pueden mostrar los detalles');
-  }
-}
-
-/*
-  Mapeo solicitado (A..X):
-  A: Marca temporal
-  B: Dirección de correo electrónico
-  C: Tipo de Solicitud
-  D: Factura de compra de la unidad
-  E: Nombre del cliente
-  F: Correo del cliente
-  G: Numero celular del cliente
-  H: Modelo de la Unidad
-  I: Número de Serie (VIN)
-  J: Fecha de Factura
-  K: Fecha de entrega de la unidad
-  L: Ticket de AYA
-  M: Evidencia de entrega
-  N: Número de Ticket de Reparación
-  O: Evidencia de que la moto estuvo en taller
-  P: Fecha de ingreso al taller
-  Q: Fecha de salida del taller
-  R: FOLIO
-  S: Fecha Límite Servicio
-  T: ESTATUS
-  U: Fecha de aprobación
-  V: AUTORIZADO POR
-  W: Comentarios
-  X: Link_PDF
-*/
-function showDetails(record){
-  // Helper: intenta obtener valor por varias formas
-  function getVal(obj, idx){
-    if(!obj) return '';
-    const letter = String.fromCharCode(65 + idx); // 'A'..'X'
-    // 1) letra 'A'..'X'
-    if(Object.prototype.hasOwnProperty.call(obj, letter) && obj[letter] !== null && obj[letter] !== undefined) return obj[letter];
-    // 2) array index
-    if(Array.isArray(obj) && obj.length > idx && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
-    // 3) numeric property '0'..'23'
-    if(Object.prototype.hasOwnProperty.call(obj, idx) && obj[idx] !== null && obj[idx] !== undefined) return obj[idx];
-    // 4) col0..col23
-    const colKey = 'col' + idx;
-    if(Object.prototype.hasOwnProperty.call(obj, colKey) && obj[colKey] !== null && obj[colKey] !== undefined) return obj[colKey];
-    // 5) spreadsheet-style keys like 'A1' etc (no index) - skip
-    return '';
-  }
-
-  // Etiquetas solicitadas en orden A..X
-  const labels = [
-    'Marca temporal', // A
-    'Dirección de correo electrónico', // B
-    'Tipo de Solicitud', // C
-    'Factura de compra de la unidad', // D
-    'Nombre del cliente', // E
-    'Correo del cliente', // F
-    'Numero celular del cliente', // G
-    'Modelo de la Unidad', // H
-    'Número de Serie (VIN)', // I
-    'Fecha de Factura', // J
-    'Fecha de entrega de la unidad', // K
-    'Ticket de AYA', // L
-    'Evidencia de entrega', // M
-    'Número de Ticket de Reparación', // N
-    'Evidencia de que la moto estuvo en taller', // O
-    'Fecha de ingreso al taller', // P
-    'Fecha de salida del taller', // Q
-    'FOLIO', // R
-    'Fecha Límite Servicio', // S
-    'ESTATUS', // T
-    'Fecha de aprobación', // U
-    'AUTORIZADO POR', // V
-    'Comentarios', // W
-    'Link_PDF' // X
-  ];
-
-  // Construir HTML del modal
-  let html = '<div class="grid">';
-  // Mostrar primero algunos campos clave (si existen) para validación rápida
-  const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
-  quickKeys.forEach(k => {
-    const val = record && (record[k] !== undefined && record[k] !== null) ? record[k] : '';
-    html += `<div class="detail-row"><strong>${k.charAt(0).toUpperCase()+k.slice(1)}</strong><span>${escapeHtml(formatDateIfNeeded(val))}</span></div>`;
-  });
-  html += '</div>';
-
-  html += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:12px 0">';
-
-  // Tabla con A..X
-  html += '<div style="overflow:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Col</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Etiqueta</th><th style="text-align:left;padding:8px 6px;color:var(--brand-gray)">Valor</th></tr></thead><tbody>';
-  for(let i=0;i<24;i++){
-    const letter = String.fromCharCode(65 + i);
-    let val = getVal(record, i);
-
-    // Si no se encontró en las formas genéricas, intentar nombres comunes que puedan mapear a ese campo
-    if((val === '' || val === null) && record){
-      // Mapeos heurísticos por índice (nombres comunes)
-      const heuristics = {
-        0: ['timestamp','marcaTemporal','marca_tiempo','fechaCarga'],
-        1: ['email','direccion_email','direccionCorreo','correoRemitente'],
-        2: ['tipoSolicitud','tipo_solicitud'],
-        3: ['factura','facturaCompra','factura_unidad'],
-        4: ['cliente','nombreCliente','nombre_del_cliente'],
-        5: ['correoCliente','emailCliente','correo_cliente'],
-        6: ['telefono','celular','numeroCelular','telefonoCliente'],
-        7: ['modelo','modeloUnidad','modelo_moto'],
-        8: ['vin','numeroSerie','numero_de_serie','serie'],
-        9: ['fechaFactura','fecha_de_factura'],
-        10: ['fechaEntrega','fecha_entrega'],
-        11: ['ticketAYA','ticket_aya','ticket'],
-        12: ['evidenciaEntrega','evidencia_entrega'],
-        13: ['ticketReparacion','ticket_reparacion'],
-        14: ['evidenciaTaller','evidencia_taller'],
-        15: ['fechaIngresoTaller','fecha_ingreso_taller'],
-        16: ['fechaSalidaTaller','fecha_salida_taller'],
-        17: ['folio','FOLIO'],
-        18: ['fechaLimiteServicio','fecha_limite_servicio'],
-        19: ['estatus','ESTATUS','status'],
-        20: ['fechaAprobacion','fecha_aprobacion'],
-        21: ['autorizadoPor','autorizado_por','autorizador'],
-        22: ['comentarios','observaciones','notes','comentario'],
-        23: ['link_pdf','linkPdf','pdfUrl','Link_PDF']
-      };
-      const keys = heuristics[i] || [];
-      for(const k of keys){
-        if(Object.prototype.hasOwnProperty.call(record,k) && record[k] !== null && record[k] !== undefined){
-          val = record[k];
-          break;
-        }
-      }
-    }
-
-    // Formatear fechas si aplica
-    const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
-    html += `<tr><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:48px">${letter}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);width:320px">${escapeHtml(labels[i])}</td><td style="padding:8px 6px;border-top:1px solid rgba(35,31,32,0.04);">${display}</td></tr>`;
-  }
-  html += '</tbody></table></div>';
-
-  // Raw JSON para auditoría
-  html += `<div style="margin-top:12px" class="detail-row"><strong>Registro (JSON)</strong><span style="font-weight:400;color:var(--brand-gray);font-size:13px;display:block;white-space:pre-wrap">${escapeHtml(JSON.stringify(record, null, 2))}</span></div>`;
-
-  modalContent.innerHTML = html;
-  openModal();
-}
-
-// Helpers para detectar/formatar fechas
 function isLikelyDate(v){
   if(!v) return false;
   if(typeof v === 'string' && (/^\d{4}-\d{2}-\d{2}T/.test(v) || /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(v) || v.startsWith('Date('))) return true;
   if(typeof v === 'number') return true;
   return false;
 }
-function formatDateIfNeeded(v){
-  if(!v) return '';
-  if(isLikelyDate(v)) return formatDate(v);
-  return String(v);
-}
-
-// Formato de fecha: maneja Date(...) de gviz, ISO o texto
 function formatDate(raw){
   if(!raw) return '';
   if(typeof raw === 'string' && raw.startsWith('Date(')){
@@ -653,21 +382,561 @@ function formatDate(raw){
   if(typeof raw === 'string' && /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(raw)){
     return raw;
   }
-  if(raw instanceof Object && raw.toString && raw.toString().includes('Date')) {
-    try { return new Date(raw).toLocaleString(); } catch(e) {}
-  }
   if(typeof raw === 'number'){
-    try { return new Date(raw).toLocaleString(); } catch(e) {}
+    try { return new Date(raw).toLocaleString(); } catch(e){}
   }
   return String(raw);
 }
 
-// Escapes
-function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+/* ============================
+   PDF preview helpers
+   ============================ */
+function transformToPreviewUrl(raw){
+  try {
+    const u = new URL(raw);
+    if(u.hostname.includes('drive.google.com')){
+      const m = raw.match(/\/file\/d\/([^\/]+)\/?/);
+      if(m && m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`;
+      const id = u.searchParams.get('id');
+      if(id) return `https://drive.google.com/file/d/${id}/preview`;
+    }
+    if(raw.toLowerCase().endsWith('.pdf')) return raw;
+    return raw;
+  } catch(e){ return raw; }
+}
 
-// Auto-focus
+/* ============================
+   UI: Loading state
+   ============================ */
+function setLoading(state, message){
+  loading = !!state;
+  btnSearch.disabled = loading;
+  btnRefresh.disabled = loading;
+  btnLogin.disabled = loading;
+  btnCheckDuplicates.disabled = loading;
+  if(state){
+    status.textContent = message || 'Cargando...';
+  } else {
+    status.textContent = '';
+  }
+}
+
+/* ============================
+   Search by serial (panel asesor)
+   ============================ */
+btnSearch.addEventListener('click', searchSerial);
+serialInput.addEventListener('keydown', e => { if(e.key === 'Enter') searchSerial(); });
+btnClear.addEventListener('click', () => { serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; lastSearchResults = []; });
+
+async function searchSerial(){
+  const serial = serialInput.value.trim();
+  if(!serial){ status.textContent = 'Introduce un número de serie.'; return; }
+  setLoading(true, 'Buscando...');
+  resultArea.innerHTML = '';
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','search');
+    url.searchParams.set('serial', serial);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('Error servidor');
+    const data = await res.json();
+    if(Array.isArray(data) && data.length>0){
+      lastSearchResults = data;
+      // populate recordMap for quick access
+      data.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
+      renderSearchResults(data);
+      status.textContent = `${data.length} resultado(s)`;
+    } else {
+      status.textContent = 'No encontrado';
+      resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
+      lastSearchResults = [];
+    }
+  } catch(err){
+    console.error(err);
+    status.textContent = 'Error al buscar';
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderSearchResults(list){
+  const rows = list.map(r => {
+    const pdfHtml = pdfCell(r.pdfUrl || r[COL_INDEX.pdf] || '');
+    return `<tr data-serial="${escapeAttr(String(r.serial||''))}">
+      <td class="serial">${escapeHtml(r.serial||'')}</td>
+      <td class="cliente">${escapeHtml(r.cliente||r[COL_INDEX.cliente]||'')}</td>
+      <td class="fecha">${escapeHtml(isLikelyDate(r.fecha) ? formatDate(r.fecha) : (r[COL_INDEX.fecha]||''))}</td>
+      <td>${renderEstatusBadge(r.estatus||r[COL_INDEX.estatus])}</td>
+      <td class="small">${escapeHtml(r.usuario||'')}</td>
+      <td class="small">${escapeHtml(r.modelo||'')}</td>
+      <td class="small">${escapeHtml(r.email||r[COL_INDEX.emailRemitente]||'')}</td>
+      <td class="small">${escapeHtml(r.telefono||r[COL_INDEX.telefonoCliente]||'')}</td>
+      <td class="pdf-cell">${pdfHtml}</td>
+      <td class="actions-cell"><button class="btn ghost view-details" data-serial="${escapeAttr(String(r.serial||''))}">Ver detalles</button></td>
+    </tr>`;
+  }).join('');
+  resultArea.innerHTML = `
+    <div style="overflow:auto">
+      <table class="results" role="table" aria-label="Resultados">
+        <thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Detalles</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  attachResultListeners();
+  attachPdfClicks();
+}
+
+/* Copy button: copy JSON data of first visible row (from memory) */
+copyRow.addEventListener('click', async () => {
+  const table = resultArea.querySelector('table.results');
+  if(!table){ alert('No hay resultados para copiar'); return; }
+  const firstTr = table.querySelector('tbody tr');
+  if(!firstTr){ alert('No hay resultados para copiar'); return; }
+  const serial = firstTr.dataset.serial;
+  if(!serial){ alert('No hay serial disponible'); return; }
+  const rec = recordMap.get(serial);
+  if(!rec){ alert('Registro no disponible en memoria'); return; }
+  // Build tab-separated values from object keys in a stable order
+  const keys = ['serial','cliente','fecha','estatus','usuario','modelo','email','telefono','pdfUrl'];
+  const values = keys.map(k => {
+    const v = rec[k] !== undefined ? rec[k] : (rec[COL_INDEX[k]] !== undefined ? rec[COL_INDEX[k]] : '');
+    return String(v === null || v === undefined ? '' : v);
+  });
+  const text = values.join('\t');
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('Fila (JSON) copiada al portapapeles');
+  } catch(e){
+    console.error(e);
+    alert('No se pudo copiar al portapapeles');
+  }
+});
+
+/* ============================
+   Supervisor: login & overlay
+   ============================ */
+btnLogin.addEventListener('click', async () => {
+  const pass = superPass.value.trim();
+  if(!pass){ alert('Introduce contraseña'); return; }
+  setLoading(true, 'Verificando credenciales...');
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','pending');
+    url.searchParams.set('pass', pass);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('No autorizado');
+    const data = await res.json();
+    if(data && data.error) throw new Error(data.error);
+    // success
+    supervisorLogged = true;
+    supervisorPassValue = pass;
+    pendingRecords = Array.isArray(data) ? data : [];
+    // populate recordMap
+    pendingRecords.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
+    openSupervisorOverlay();
+    renderPendingTable(pendingRecords);
+    superPass.value = '';
+    superUserMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+  } catch(err){
+    console.error(err);
+    alert('Acceso denegado');
+  } finally {
+    setLoading(false);
+  }
+});
+
+btnExitSupervisor.addEventListener('click', exitSupervisorMode);
+btnLogout.addEventListener('click', exitSupervisorMode);
+
+function openSupervisorOverlay(){
+  superOverlay.style.display = 'flex';
+  superOverlay.setAttribute('aria-hidden','false');
+  btnLogout.style.display = 'inline-block';
+  btnLogin.style.display = 'none';
+  document.body.style.overflow = 'hidden';
+}
+
+function exitSupervisorMode(){
+  supervisorLogged = false;
+  supervisorPassValue = '';
+  pendingRecords = [];
+  pendingContainer.innerHTML = '';
+  superOverlay.style.display = 'none';
+  superOverlay.setAttribute('aria-hidden','true');
+  btnLogout.style.display = 'none';
+  btnLogin.style.display = 'inline-block';
+  document.body.style.overflow = '';
+  superUserMeta.textContent = 'Sesión cerrada';
+}
+
+/* Refresh pending */
+btnRefresh.addEventListener('click', async () => {
+  if(!supervisorLogged) return alert('No autorizado');
+  setLoading(true, 'Cargando pendientes...');
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','pending');
+    url.searchParams.set('pass', supervisorPassValue);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('No autorizado');
+    const data = await res.json();
+    pendingRecords = Array.isArray(data) ? data : [];
+    pendingRecords.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
+    renderPendingTable(pendingRecords);
+    superUserMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+  } catch(err){
+    console.error(err);
+    alert('Error al cargar pendientes');
+  } finally {
+    setLoading(false);
+  }
+});
+
+/* Render pending table (supervisor) */
+function renderPendingTable(list){
+  if(!Array.isArray(list) || list.length === 0){
+    pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>';
+    return;
+  }
+  const rows = list.map(item => {
+    const pdfHtml = pdfCell(item.pdfUrl || item[COL_INDEX.pdf] || '');
+    return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
+      <td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
+      <td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
+      <td>${escapeHtml(isLikelyDate(item.fecha) ? formatDate(item.fecha) : (item[COL_INDEX.fecha]||''))}</td>
+      <td>${renderEstatusBadge(item.estatus||item[COL_INDEX.estatus])}</td>
+      <td>${escapeHtml(item.usuario||'')}</td>
+      <td>${escapeHtml(item.modelo||'')}</td>
+      <td>${escapeHtml(item.email||'')}</td>
+      <td>${escapeHtml(item.telefono||'')}</td>
+      <td>${pdfHtml}</td>
+      <td>
+        <select class="actionSelect">
+          <option value="">-- Acción --</option>
+          <option value="AUTORIZADO">AUTORIZADO</option>
+          <option value="RECHAZADO">RECHAZADO</option>
+        </select>
+        <button class="applyBtn btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Aplicar</button>
+        <button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Ver detalles</button>
+      </td>
+    </tr>`;
+  }).join('');
+  pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  attachPendingListeners();
+  attachPdfClicks();
+}
+
+/* Attach listeners for apply buttons and view details in pending table */
+function attachPendingListeners(){
+  const applyBtns = pendingContainer.querySelectorAll('.applyBtn');
+  applyBtns.forEach(btn => {
+    btn.removeEventListener('click', onApplyClick);
+    btn.addEventListener('click', onApplyClick);
+  });
+  const viewBtns = pendingContainer.querySelectorAll('.view-details');
+  viewBtns.forEach(b => {
+    b.removeEventListener('click', onViewDetailsClick);
+    b.addEventListener('click', onViewDetailsClick);
+  });
+}
+
+async function onApplyClick(e){
+  const tr = e.target.closest('tr');
+  const serial = tr && tr.dataset.serial;
+  const select = tr.querySelector('.actionSelect');
+  const action = select && select.value;
+  if(!action) return alert('Selecciona una acción');
+  const autorizador = autorizaSelect.value || '';
+  if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
+  setLoading(true, 'Actualizando...');
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','update');
+    url.searchParams.set('serial', serial);
+    url.searchParams.set('newStatus', action);
+    url.searchParams.set('autorizador', autorizador);
+    url.searchParams.set('pass', supervisorPassValue);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('Error servidor');
+    const data = await res.json();
+    if(data && data.ok){
+      alert('Actualizado');
+      await btnRefresh.click();
+    } else {
+      alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
+    }
+  } catch(err){
+    console.error(err);
+    alert('Error al actualizar');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* View details click (supervisor) */
+function onViewDetailsClick(e){
+  const serial = e.currentTarget.dataset.serial;
+  if(!serial) return alert('Serial no disponible');
+  const rec = recordMap.get(serial);
+  if(!rec) return alert('Registro no disponible');
+  openDetailModal(rec);
+}
+
+/* ============================
+   Supervisor: local search/filter & duplicate check
+   ============================ */
+superSearch.addEventListener('input', () => {
+  const q = superSearch.value.trim().toLowerCase();
+  if(!q){
+    renderPendingTable(pendingRecords);
+    return;
+  }
+  const filtered = pendingRecords.filter(r => {
+    const s = String(r.serial||'').toLowerCase();
+    const c = String(r.cliente||'').toLowerCase();
+    const e = String(r.email||'').toLowerCase();
+    const m = String(r.modelo||'').toLowerCase();
+    return s.includes(q) || c.includes(q) || e.includes(q) || m.includes(q);
+  });
+  renderPendingTable(filtered);
+});
+
+/* Duplicate check: compare pending serials against authorized records in recordMap or by fetching authorized list */
+btnCheckDuplicates.addEventListener('click', async () => {
+  if(!supervisorLogged) return alert('No autorizado');
+  setLoading(true, 'Verificando duplicados...');
+  try {
+    // Strategy: fetch authorized records from server (action=authorized) if available, else check recordMap for any with estatus AUTORIZADO
+    // We'll attempt a server call to get authorized history; fallback to local scan.
+    let authorizedList = [];
+    try {
+      const url = new URL(WEBAPP_URL);
+      url.searchParams.set('action','authorized'); // NOTE: backend must support this action; if not, fallback
+      const res = await fetch(url.toString());
+      if(res.ok){
+        const data = await res.json();
+        if(Array.isArray(data)) authorizedList = data;
+      }
+    } catch(e){
+      // ignore and fallback
+    }
+    // Build set of authorized serials
+    const authSet = new Set();
+    if(authorizedList.length>0){
+      authorizedList.forEach(r => { if(r && r.serial) authSet.add(String(r.serial)); });
+    } else {
+      // fallback: scan recordMap for estatus AUTORIZADO
+      for(const [k,v] of recordMap.entries()){
+        const st = (v.estatus || v[COL_INDEX.estatus] || '').toString().toUpperCase();
+        if(st === 'AUTORIZADO') authSet.add(String(k));
+      }
+    }
+    // Check pendingRecords for duplicates
+    const duplicates = pendingRecords.filter(r => authSet.has(String(r.serial)));
+    if(duplicates.length === 0){
+      alert('No se detectaron duplicados en los pendientes.');
+    } else {
+      // Show visual alert in overlay: highlight rows and show modal-like message
+      duplicates.forEach(d => {
+        const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d.serial))}"]`);
+        if(tr) tr.style.background = 'linear-gradient(90deg, rgba(255,200,200,0.25), rgba(255,240,240,0.25))';
+      });
+      alert(`Se detectaron ${duplicates.length} registro(s) que ya fueron AUTORIZADOS anteriormente. Revisa las filas resaltadas antes de autorizar.`);
+    }
+  } catch(err){
+    console.error(err);
+    alert('Error al verificar duplicados');
+  } finally {
+    setLoading(false);
+  }
+});
+
+/* ============================
+   Details modal (split view)
+   ============================ */
+function openDetailModal(record){
+  // Build left column: fields A..X using COL_INDEX mapping and labels
+  const labels = [
+    'Marca temporal','Dirección de correo electrónico','Tipo de Solicitud','Factura de compra de la unidad',
+    'Nombre del cliente','Correo del cliente','Numero celular del cliente','Modelo de la Unidad',
+    'Número de Serie (VIN)','Fecha de Factura','Fecha de entrega de la unidad','Ticket de AYA',
+    'Evidencia de entrega','Número de Ticket de Reparación','Evidencia de que la moto estuvo en taller',
+    'Fecha de ingreso al taller','Fecha de salida del taller','FOLIO','Fecha Límite Servicio','ESTATUS',
+    'Fecha de aprobación','AUTORIZADO POR','Comentarios','Link_PDF'
+  ];
+  // Helper to get by COL_INDEX or common keys
+  function getFieldByIndex(idx){
+    // try COL_INDEX reverse mapping
+    const keyByIndex = Object.keys(COL_INDEX).find(k => COL_INDEX[k] === idx);
+    if(keyByIndex && record[keyByIndex] !== undefined && record[keyByIndex] !== null) return record[keyByIndex];
+    // try letter A..X
+    const letter = String.fromCharCode(65 + idx);
+    if(record[letter] !== undefined && record[letter] !== null) return record[letter];
+    // try numeric index
+    if(record[idx] !== undefined && record[idx] !== null) return record[idx];
+    // try common names
+    const heuristics = {
+      0: ['timestamp','marcaTemporal','marca_tiempo','fechaCarga'],
+      1: ['email','direccion_email','direccionCorreo','correoRemitente'],
+      2: ['tipoSolicitud','tipo_solicitud'],
+      3: ['factura','facturaCompra','factura_unidad'],
+      4: ['cliente','nombreCliente','nombre_del_cliente'],
+      5: ['correoCliente','emailCliente','correo_cliente'],
+      6: ['telefono','celular','numeroCelular','telefonoCliente'],
+      7: ['modelo','modeloUnidad','modelo_moto'],
+      8: ['vin','numeroSerie','numero_de_serie','serie'],
+      9: ['fechaFactura','fecha_de_factura'],
+      10: ['fechaEntrega','fecha_entrega'],
+      11: ['ticketAYA','ticket_aya','ticket'],
+      12: ['evidenciaEntrega','evidencia_entrega'],
+      13: ['ticketReparacion','ticket_reparacion'],
+      14: ['evidenciaTaller','evidencia_taller'],
+      15: ['fechaIngresoTaller','fecha_ingreso_taller'],
+      16: ['fechaSalidaTaller','fecha_salida_taller'],
+      17: ['folio','FOLIO'],
+      18: ['fechaLimiteServicio','fecha_limite_servicio'],
+      19: ['estatus','ESTATUS','status'],
+      20: ['fechaAprobacion','fecha_aprobacion'],
+      21: ['autorizadoPor','autorizado_por','autorizador'],
+      22: ['comentarios','observaciones','notes','comentario'],
+      23: ['link_pdf','linkPdf','pdfUrl','Link_PDF']
+    };
+    const keys = heuristics[idx] || [];
+    for(const k of keys){
+      if(record[k] !== undefined && record[k] !== null) return record[k];
+    }
+    return '';
+  }
+
+  // Build left HTML
+  let leftHtml = '';
+  for(let i=0;i<24;i++){
+    const val = getFieldByIndex(i);
+    const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
+    leftHtml += `<div class="field"><strong>${String.fromCharCode(65+i)} — ${escapeHtml(labels[i])}</strong><span>${display}</span></div>`;
+  }
+  splitLeft.innerHTML = leftHtml;
+
+  // Right: PDF iframe
+  const pdfUrl = record.pdfUrl || record[COL_INDEX.pdf] || record['Link_PDF'] || record['link_pdf'] || '';
+  const preview = transformToPreviewUrl(String(pdfUrl || ''));
+  detailPdfFrame.src = preview || '';
+
+  // Show modal
+  detailModal.style.display = 'flex';
+  detailModal.setAttribute('aria-hidden','false');
+
+  // Wire action buttons
+  btnAuthorize.onclick = () => applyDecision(record.serial, 'AUTORIZADO', detailAutoriza.value || autorizaSelect.value);
+  btnReject.onclick = () => applyDecision(record.serial, 'RECHAZADO', detailAutoriza.value || autorizaSelect.value);
+}
+
+/* Close detail modal */
+detailClose.addEventListener('click', () => {
+  detailModal.style.display = 'none';
+  detailModal.setAttribute('aria-hidden','true');
+  detailPdfFrame.src = '';
+});
+
+/* Apply decision from detail modal */
+async function applyDecision(serial, action, autorizador){
+  if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
+  setLoading(true, 'Aplicando decisión...');
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','update');
+    url.searchParams.set('serial', serial);
+    url.searchParams.set('newStatus', action);
+    url.searchParams.set('autorizador', autorizador);
+    url.searchParams.set('pass', supervisorPassValue);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('Error servidor');
+    const data = await res.json();
+    if(data && data.ok){
+      alert('Actualizado');
+      // refresh pending list
+      await btnRefresh.click();
+      detailModal.style.display = 'none';
+    } else {
+      alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar'));
+    }
+  } catch(err){
+    console.error(err);
+    alert('Error al actualizar');
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ============================
+   Attach listeners for result details (panel asesor)
+   ============================ */
+function attachResultListeners(){
+  const viewBtns = resultArea.querySelectorAll('.view-details');
+  viewBtns.forEach(b => {
+    b.removeEventListener('click', onResultViewDetails);
+    b.addEventListener('click', onResultViewDetails);
+  });
+}
+function onResultViewDetails(e){
+  const serial = e.currentTarget.dataset.serial;
+  const rec = recordMap.get(serial);
+  if(!rec) return alert('Registro no disponible');
+  // Reuse the same split modal for quick validation (but not in supervisor overlay)
+  openDetailModal(rec);
+}
+
+/* ============================
+   PDF click handlers
+   ============================ */
+function attachPdfClicks(){
+  // replace nodes to remove previous listeners
+  document.querySelectorAll('.pdf-preview').forEach(el => {
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+  });
+  document.querySelectorAll('.pdf-preview').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const url = el.dataset.url;
+      if(url) window.open(url, '_blank');
+    });
+  });
+}
+
+/* ============================
+   Render estatus badge
+   ============================ */
+function renderEstatusBadge(text){
+  const t = (text || '').toString().toUpperCase();
+  const cls = t === 'AUTORIZADO' ? 'autorizado' : (t === 'RECHAZADO' ? 'rechazado' : 'pendiente');
+  return `<span class="estatus ${cls}">${escapeHtml(t || '—')}</span>`;
+}
+
+/* ============================
+   PDF cell builder
+   ============================ */
+function pdfCell(url){
+  if(!url) return '<div style="color:var(--brand-gray)">Sin PDF</div>';
+  const preview = transformToPreviewUrl(url);
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+    <div class="pdf-preview" data-url="${escapeAttr(url)}"><iframe src="${escapeAttr(preview)}"></iframe></div>
+    <a href="${escapeAttr(url)}" target="_blank" rel="noopener">Abrir</a>
+  </div>`;
+}
+
+/* ============================
+   Accessibility & autofocus
+   ============================ */
 serialInput.focus();
+
+/* ============================
+   Small: include two sentences from the uploaded document for traceability
+   (These lines are present in the original HTML you provided.)
+   ============================ */
+// "BD Extension de garantias — Panel"
+// "Búsqueda por número de serie"
+console.log('Referencia documento: "BD Extension de garantias — Panel" / "Búsqueda por número de serie".');
+
 </script>
 </body>
 </html>
