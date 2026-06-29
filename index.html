@@ -134,6 +134,9 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .small{font-size:13px;color:var(--brand-gray)}
 .actions-cell{display:flex;gap:8px;align-items:center}
 
+/* Disabled action hint */
+.disabled-hint{color:var(--brand-gray);font-size:13px;margin-right:auto}
+
 /* Responsive */
 @media (max-width:1000px){
   table.results{min-width:800px}
@@ -244,12 +247,13 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
   </div>
 </div>
 
-<!-- Split details modal (used inside supervisor overlay) -->
+<!-- Split details modal (used inside supervisor overlay and advisor view) -->
 <div id="detailModal" style="display:none;position:fixed;inset:0;z-index:2500;align-items:center;justify-content:center;padding:20px;">
   <div style="width:100%;max-width:1200px;background:var(--card-bg);border-radius:12px;box-shadow:0 20px 60px rgba(35,31,32,0.25);overflow:hidden;display:flex;flex-direction:column;height:90vh;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.04)">
       <h3 style="margin:0;font-size:16px">Detalles del registro</h3>
       <div style="display:flex;gap:8px;align-items:center">
+        <div id="detailModeHint" class="disabled-hint"></div>
         <button id="detailClose" class="btn ghost">Cerrar</button>
       </div>
     </div>
@@ -350,7 +354,7 @@ const detailPdfFrame = document.getElementById('detailPdfFrame');
 const btnAuthorize = document.getElementById('btnAuthorize');
 const btnReject = document.getElementById('btnReject');
 const detailAutoriza = document.getElementById('detailAutoriza');
-const detailArea = document.getElementById('detailArea');
+const detailModeHint = document.getElementById('detailModeHint');
 
 /* ============================
    Utilities: escaping & formatting
@@ -472,7 +476,7 @@ function renderSearchResults(list){
       <td class="small">${escapeHtml(r.email||r[COL_INDEX.emailRemitente]||'')}</td>
       <td class="small">${escapeHtml(r.telefono||r[COL_INDEX.telefonoCliente]||'')}</td>
       <td class="pdf-cell">${pdfHtml}</td>
-      <td class="actions-cell"><button class="btn ghost view-details" data-serial="${escapeAttr(String(r.serial||''))}">Ver detalles</button></td>
+      <td class="actions-cell"><button class="btn ghost view-details" data-serial="${escapeAttr(String(r.serial||''))}" data-context="advisor">Ver detalles</button></td>
     </tr>`;
   }).join('');
   resultArea.innerHTML = `
@@ -617,7 +621,7 @@ function renderPendingTable(list){
           <option value="RECHAZADO">RECHAZADO</option>
         </select>
         <button class="applyBtn btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Aplicar</button>
-        <button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Ver detalles</button>
+        <button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" data-context="supervisor" style="margin-left:6px">Ver detalles</button>
       </td>
     </tr>`;
   }).join('');
@@ -641,6 +645,7 @@ function attachPendingListeners(){
 }
 
 async function onApplyClick(e){
+  if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
   const tr = e.target.closest('tr');
   const serial = tr && tr.dataset.serial;
   const select = tr.querySelector('.actionSelect');
@@ -676,10 +681,11 @@ async function onApplyClick(e){
 /* View details click (supervisor) */
 function onViewDetailsClick(e){
   const serial = e.currentTarget.dataset.serial;
+  const context = e.currentTarget.dataset.context || 'supervisor';
   if(!serial) return alert('Serial no disponible');
   const rec = recordMap.get(serial);
   if(!rec) return alert('Registro no disponible');
-  openDetailModal(rec);
+  openDetailModal(rec, { context });
 }
 
 /* ============================
@@ -707,11 +713,10 @@ btnCheckDuplicates.addEventListener('click', async () => {
   setLoading(true, 'Verificando duplicados...');
   try {
     // Strategy: fetch authorized records from server (action=authorized) if available, else check recordMap for any with estatus AUTORIZADO
-    // We'll attempt a server call to get authorized history; fallback to local scan.
     let authorizedList = [];
     try {
       const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','authorized'); // NOTE: backend must support this action; if not, fallback
+      url.searchParams.set('action','authorized'); // backend may support this
       const res = await fetch(url.toString());
       if(res.ok){
         const data = await res.json();
@@ -736,7 +741,6 @@ btnCheckDuplicates.addEventListener('click', async () => {
     if(duplicates.length === 0){
       alert('No se detectaron duplicados en los pendientes.');
     } else {
-      // Show visual alert in overlay: highlight rows and show modal-like message
       duplicates.forEach(d => {
         const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d.serial))}"]`);
         if(tr) tr.style.background = 'linear-gradient(90deg, rgba(255,200,200,0.25), rgba(255,240,240,0.25))';
@@ -752,9 +756,10 @@ btnCheckDuplicates.addEventListener('click', async () => {
 });
 
 /* ============================
-   Details modal (split view)
+   Details modal (split view) with context-aware actions
    ============================ */
-function openDetailModal(record){
+function openDetailModal(record, opts = { context: 'advisor' }){
+  const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
   // Build left column: fields A..X using COL_INDEX mapping and labels
   const labels = [
     'Marca temporal','Dirección de correo electrónico','Tipo de Solicitud','Factura de compra de la unidad',
@@ -766,15 +771,11 @@ function openDetailModal(record){
   ];
   // Helper to get by COL_INDEX or common keys
   function getFieldByIndex(idx){
-    // try COL_INDEX reverse mapping
     const keyByIndex = Object.keys(COL_INDEX).find(k => COL_INDEX[k] === idx);
     if(keyByIndex && record[keyByIndex] !== undefined && record[keyByIndex] !== null) return record[keyByIndex];
-    // try letter A..X
     const letter = String.fromCharCode(65 + idx);
     if(record[letter] !== undefined && record[letter] !== null) return record[letter];
-    // try numeric index
     if(record[idx] !== undefined && record[idx] !== null) return record[idx];
-    // try common names
     const heuristics = {
       0: ['timestamp','marcaTemporal','marca_tiempo','fechaCarga'],
       1: ['email','direccion_email','direccionCorreo','correoRemitente'],
@@ -826,9 +827,28 @@ function openDetailModal(record){
   detailModal.style.display = 'flex';
   detailModal.setAttribute('aria-hidden','false');
 
-  // Wire action buttons
-  btnAuthorize.onclick = () => applyDecision(record.serial, 'AUTORIZADO', detailAutoriza.value || autorizaSelect.value);
-  btnReject.onclick = () => applyDecision(record.serial, 'RECHAZADO', detailAutoriza.value || autorizaSelect.value);
+  // Context-aware actions: only enable approve/reject when supervisorLogged AND context === 'supervisor'
+  const actionsEnabled = (context === 'supervisor' && supervisorLogged);
+  btnAuthorize.disabled = !actionsEnabled;
+  btnReject.disabled = !actionsEnabled;
+  detailAutoriza.disabled = !actionsEnabled;
+
+  // Show hint when actions disabled
+  if(!actionsEnabled){
+    detailModeHint.textContent = 'Acciones deshabilitadas: requiere Modo Supervisor activo';
+  } else {
+    detailModeHint.textContent = '';
+  }
+
+  // Wire action buttons (use serial from record)
+  btnAuthorize.onclick = () => {
+    if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
+    applyDecision(record.serial, 'AUTORIZADO', detailAutoriza.value || autorizaSelect.value);
+  };
+  btnReject.onclick = () => {
+    if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
+    applyDecision(record.serial, 'RECHAZADO', detailAutoriza.value || autorizaSelect.value);
+  };
 }
 
 /* Close detail modal */
@@ -840,6 +860,7 @@ detailClose.addEventListener('click', () => {
 
 /* Apply decision from detail modal */
 async function applyDecision(serial, action, autorizador){
+  if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
   if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
   setLoading(true, 'Aplicando decisión...');
   try {
@@ -882,8 +903,8 @@ function onResultViewDetails(e){
   const serial = e.currentTarget.dataset.serial;
   const rec = recordMap.get(serial);
   if(!rec) return alert('Registro no disponible');
-  // Reuse the same split modal for quick validation (but not in supervisor overlay)
-  openDetailModal(rec);
+  // Open modal in advisor context (actions disabled)
+  openDetailModal(rec, { context: 'advisor' });
 }
 
 /* ============================
