@@ -266,7 +266,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       </div>
     </div>
 
-    <!-- Preview selection controls (user can choose which columns to show) -->
+    <!-- Preview selection controls (user can choose which columns to show as PDF previews) -->
     <div style="padding:12px;border-bottom:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,#fff,#fbfbff)">
       <div class="preview-controls" aria-label="Controles de vista previa">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -795,6 +795,8 @@ btnCheckDuplicates.addEventListener('click', async () => {
 
 /* ============================
    Details modal (split view) with PDF previews for D, M, O, X
+   - IMPORTANT CHANGE: left panel now shows ALL fields A..X for full comparison
+   - Preview selection still controls which PDF columns are shown as tabs/iframe
    ============================ */
 function openDetailModal(record, opts = { context: 'advisor' }){
   const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
@@ -850,24 +852,23 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     return '';
   }
 
-  // Build left HTML using previewSelection to filter fields (but always show quick keys)
+  // Build left HTML: show ALL fields A..X for full comparison
   function buildLeftHtml(){
     let leftHtml = '';
-    // Quick keys for validation
+    // Quick keys for validation (kept at top)
     const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
     quickKeys.forEach(k => {
       const val = record && (record[k] !== undefined && record[k] !== null) ? record[k] : (record[COL_INDEX[k]] || '');
       leftHtml += `<div class="field"><strong>${k.charAt(0).toUpperCase()+k.slice(1)}</strong><span>${escapeHtml(isLikelyDate(val) ? formatDate(val) : String(val || ''))}</span></div>`;
     });
     leftHtml += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:8px 0">';
-    // Show only selected fields (or all if none selected)
+    // Show ALL A..X fields (always)
     for(let i=0;i<24;i++){
-      if(Object.keys(previewSelection).length > 0 && !previewSelection[i]) continue;
       const val = getFieldByIndex(i);
       const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
       leftHtml += `<div class="field"><strong>${String.fromCharCode(65+i)} — ${escapeHtml(labels[i])}</strong><span>${display}</span></div>`;
     }
-    splitLeft.innerHTML = leftHtml || '<div class="small" style="color:var(--brand-gray)">No hay campos seleccionados para mostrar.</div>';
+    splitLeft.innerHTML = leftHtml;
   }
 
   // Build previews array from selected indices (D=3, M=12, O=14, X=23)
@@ -932,6 +933,7 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     chk.onchange = () => {
       const idx = Number(chk.dataset.idx);
       previewSelection[idx] = chk.checked;
+      // left panel remains full A..X (no filtering) but we still rebuild it to reflect any dynamic values
       buildLeftHtml();
       renderPreviewArea();
     };
