@@ -126,6 +126,11 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .split-left .field strong{display:block;color:var(--brand-gray);font-size:12px;margin-bottom:6px}
 .split-left .field span{color:var(--brand-black);font-weight:700;word-break:break-word}
 
+/* Preview tabs */
+.preview-tabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.preview-tab{padding:8px 10px;border-radius:8px;background:rgba(0,0,0,0.03);cursor:pointer;font-weight:700;color:var(--brand-black);border:1px solid rgba(35,31,32,0.04)}
+.preview-tab.active{background:linear-gradient(90deg, rgba(242,143,23,0.12), rgba(242,143,23,0.06));border-color:rgba(242,143,23,0.12)}
+
 /* Fixed bottom action bar inside details */
 .detail-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:10px;border-top:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.98))}
 
@@ -265,7 +270,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
     <div style="padding:12px;border-bottom:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,#fff,#fbfbff)">
       <div class="preview-controls" aria-label="Controles de vista previa">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-          <span class="small" style="margin-right:8px;color:var(--brand-gray)">Mostrar campos:</span>
+          <span class="small" style="margin-right:8px;color:var(--brand-gray)">Mostrar previews PDF (si existen):</span>
           <!-- D (index 3), M (index 12), O (index 14), X (index 23) -->
           <label><input type="checkbox" id="chkD" data-idx="3" /> <strong>D</strong> Factura</label>
           <label><input type="checkbox" id="chkM" data-idx="12" /> <strong>M</strong> Evidencia entrega</label>
@@ -278,6 +283,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
     <div class="split-modal" style="padding:12px;flex:1;overflow:hidden">
       <div class="split-left" id="splitLeft" aria-label="Campos A a X" style="overflow:auto"></div>
       <div class="split-right" id="splitRight" style="display:flex;flex-direction:column;gap:8px">
+        <div id="previewTabsContainer" style="min-height:48px"></div>
         <div style="flex:1;overflow:auto;border-radius:8px;overflow:hidden">
           <iframe id="detailPdfFrame" src="" style="width:100%;height:100%;border:0"></iframe>
         </div>
@@ -386,6 +392,7 @@ const chkD = document.getElementById('chkD');
 const chkM = document.getElementById('chkM');
 const chkO = document.getElementById('chkO');
 const chkX = document.getElementById('chkX');
+const previewTabsContainer = document.getElementById('previewTabsContainer');
 
 /* ============================
    Utilities: escaping & formatting
@@ -787,7 +794,7 @@ btnCheckDuplicates.addEventListener('click', async () => {
 });
 
 /* ============================
-   Details modal (split view) with preview selection
+   Details modal (split view) with PDF previews for D, M, O, X
    ============================ */
 function openDetailModal(record, opts = { context: 'advisor' }){
   const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
@@ -843,15 +850,19 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     return '';
   }
 
-  // Build left HTML using previewSelection to filter fields
+  // Build left HTML using previewSelection to filter fields (but always show quick keys)
   function buildLeftHtml(){
     let leftHtml = '';
+    // Quick keys for validation
+    const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
+    quickKeys.forEach(k => {
+      const val = record && (record[k] !== undefined && record[k] !== null) ? record[k] : (record[COL_INDEX[k]] || '');
+      leftHtml += `<div class="field"><strong>${k.charAt(0).toUpperCase()+k.slice(1)}</strong><span>${escapeHtml(isLikelyDate(val) ? formatDate(val) : String(val || ''))}</span></div>`;
+    });
+    leftHtml += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:8px 0">';
+    // Show only selected fields (or all if none selected)
     for(let i=0;i<24;i++){
-      // If previewSelection has explicit entries, only show those checked; otherwise show all
-      if(Object.keys(previewSelection).length > 0){
-        // If this index is not selected, skip
-        if(!previewSelection[i]) continue;
-      }
+      if(Object.keys(previewSelection).length > 0 && !previewSelection[i]) continue;
       const val = getFieldByIndex(i);
       const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
       leftHtml += `<div class="field"><strong>${String.fromCharCode(65+i)} — ${escapeHtml(labels[i])}</strong><span>${display}</span></div>`;
@@ -859,10 +870,56 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     splitLeft.innerHTML = leftHtml || '<div class="small" style="color:var(--brand-gray)">No hay campos seleccionados para mostrar.</div>';
   }
 
-  // Right: PDF iframe
-  const pdfUrl = record.pdfUrl || record[COL_INDEX.pdf] || record['Link_PDF'] || record['link_pdf'] || '';
-  const preview = transformToPreviewUrl(String(pdfUrl || ''));
-  detailPdfFrame.src = preview || '';
+  // Build previews array from selected indices (D=3, M=12, O=14, X=23)
+  function buildPreviews(){
+    const previewIndices = [3,12,14,23];
+    const previews = [];
+    previewIndices.forEach(idx => {
+      if(!previewSelection[idx]) return;
+      const raw = getFieldByIndex(idx);
+      if(!raw) return;
+      // raw may be a URL or an object; try to extract URL-like string
+      let url = '';
+      if(typeof raw === 'string') url = raw.trim();
+      else if(typeof raw === 'object' && raw !== null){
+        // common keys
+        url = raw.pdfUrl || raw.link || raw.url || raw.Link_PDF || raw.link_pdf || '';
+      }
+      if(url){
+        const previewUrl = transformToPreviewUrl(String(url));
+        previews.push({ idx, label: String.fromCharCode(65+idx), title: labels[idx], url: previewUrl, rawUrl: url });
+      }
+    });
+    return previews;
+  }
+
+  // Render preview tabs and set iframe
+  function renderPreviewArea(){
+    const previews = buildPreviews();
+    previewTabsContainer.innerHTML = '';
+    if(previews.length === 0){
+      previewTabsContainer.innerHTML = '<div class="small" style="color:var(--brand-gray)">No hay PDFs seleccionados o no se encontraron enlaces en las columnas seleccionadas.</div>';
+      detailPdfFrame.src = '';
+      return;
+    }
+    // Create tabs
+    previews.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'preview-tab' + (i===0 ? ' active' : '');
+      btn.textContent = `${p.label} • ${p.title}`;
+      btn.dataset.url = p.url;
+      btn.addEventListener('click', () => {
+        // deactivate siblings
+        previewTabsContainer.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        detailPdfFrame.src = p.url;
+      });
+      previewTabsContainer.appendChild(btn);
+    });
+    // set first preview
+    detailPdfFrame.src = previews[0].url;
+  }
 
   // Initialize checkboxes to current previewSelection
   chkD.checked = !!previewSelection[3];
@@ -870,21 +927,19 @@ function openDetailModal(record, opts = { context: 'advisor' }){
   chkO.checked = !!previewSelection[14];
   chkX.checked = !!previewSelection[23];
 
-  // Wire checkbox changes to update previewSelection and re-render left panel
+  // Wire checkbox changes to update previewSelection and re-render left panel + previews
   [chkD, chkM, chkO, chkX].forEach(chk => {
     chk.onchange = () => {
       const idx = Number(chk.dataset.idx);
       previewSelection[idx] = chk.checked;
       buildLeftHtml();
+      renderPreviewArea();
     };
   });
 
   // Initial render
   buildLeftHtml();
-
-  // Show modal
-  detailModal.style.display = 'flex';
-  detailModal.setAttribute('aria-hidden','false');
+  renderPreviewArea();
 
   // Context-aware actions: only enable approve/reject when supervisorLogged AND context === 'supervisor'
   const actionsEnabled = (context === 'supervisor' && supervisorLogged);
@@ -908,6 +963,10 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
     applyDecision(record.serial, 'RECHAZADO', detailAutoriza.value || autorizaSelect.value);
   };
+
+  // Show modal
+  detailModal.style.display = 'flex';
+  detailModal.setAttribute('aria-hidden','false');
 }
 
 /* Close detail modal */
@@ -950,7 +1009,7 @@ async function applyDecision(serial, action, autorizador){
 }
 
 /* ============================
-   Attach listeners for result details (panel asesor)
+   Attach listeners for result details (panel advisor)
    ============================ */
 function attachResultListeners(){
   const viewBtns = resultArea.querySelectorAll('.view-details');
