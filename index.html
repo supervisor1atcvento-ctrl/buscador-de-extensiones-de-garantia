@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BD Extensión de garantías — Panel</title>
-
 <style>
 :root{
   --brand-white: #FFFFFF;
@@ -137,6 +136,10 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 /* Disabled action hint */
 .disabled-hint{color:var(--brand-gray);font-size:13px;margin-right:auto}
 
+/* Checkbox group for preview selection */
+.preview-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.preview-controls label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--brand-black)}
+
 /* Responsive */
 @media (max-width:1000px){
   table.results{min-width:800px}
@@ -258,6 +261,20 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       </div>
     </div>
 
+    <!-- Preview selection controls (user can choose which columns to show) -->
+    <div style="padding:12px;border-bottom:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,#fff,#fbfbff)">
+      <div class="preview-controls" aria-label="Controles de vista previa">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span class="small" style="margin-right:8px;color:var(--brand-gray)">Mostrar campos:</span>
+          <!-- D (index 3), M (index 12), O (index 14), X (index 23) -->
+          <label><input type="checkbox" id="chkD" data-idx="3" /> <strong>D</strong> Factura</label>
+          <label><input type="checkbox" id="chkM" data-idx="12" /> <strong>M</strong> Evidencia entrega</label>
+          <label><input type="checkbox" id="chkO" data-idx="14" /> <strong>O</strong> Evidencia taller</label>
+          <label><input type="checkbox" id="chkX" data-idx="23" /> <strong>X</strong> Link PDF</label>
+        </div>
+      </div>
+    </div>
+
     <div class="split-modal" style="padding:12px;flex:1;overflow:hidden">
       <div class="split-left" id="splitLeft" aria-label="Campos A a X" style="overflow:auto"></div>
       <div class="split-right" id="splitRight" style="display:flex;flex-direction:column;gap:8px">
@@ -324,6 +341,15 @@ const recordMap = new Map();           // map serial -> record (for quick lookup
 let loading = false;
 let supervisorLogged = false;
 let supervisorPassValue = '';
+let currentDetailRecord = null;
+
+// Default preview selection (D, M, O, X)
+const previewSelection = {
+  3: true,   // D
+  12: true,  // M
+  14: true,  // O
+  23: true   // X
+};
 
 /* ============================
    DOM Elements
@@ -355,6 +381,11 @@ const btnAuthorize = document.getElementById('btnAuthorize');
 const btnReject = document.getElementById('btnReject');
 const detailAutoriza = document.getElementById('detailAutoriza');
 const detailModeHint = document.getElementById('detailModeHint');
+
+const chkD = document.getElementById('chkD');
+const chkM = document.getElementById('chkM');
+const chkO = document.getElementById('chkO');
+const chkX = document.getElementById('chkX');
 
 /* ============================
    Utilities: escaping & formatting
@@ -756,11 +787,13 @@ btnCheckDuplicates.addEventListener('click', async () => {
 });
 
 /* ============================
-   Details modal (split view) with context-aware actions
+   Details modal (split view) with preview selection
    ============================ */
 function openDetailModal(record, opts = { context: 'advisor' }){
   const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
-  // Build left column: fields A..X using COL_INDEX mapping and labels
+  currentDetailRecord = record;
+
+  // Labels A..X
   const labels = [
     'Marca temporal','Dirección de correo electrónico','Tipo de Solicitud','Factura de compra de la unidad',
     'Nombre del cliente','Correo del cliente','Numero celular del cliente','Modelo de la Unidad',
@@ -769,6 +802,7 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     'Fecha de ingreso al taller','Fecha de salida del taller','FOLIO','Fecha Límite Servicio','ESTATUS',
     'Fecha de aprobación','AUTORIZADO POR','Comentarios','Link_PDF'
   ];
+
   // Helper to get by COL_INDEX or common keys
   function getFieldByIndex(idx){
     const keyByIndex = Object.keys(COL_INDEX).find(k => COL_INDEX[k] === idx);
@@ -809,19 +843,44 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     return '';
   }
 
-  // Build left HTML
-  let leftHtml = '';
-  for(let i=0;i<24;i++){
-    const val = getFieldByIndex(i);
-    const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
-    leftHtml += `<div class="field"><strong>${String.fromCharCode(65+i)} — ${escapeHtml(labels[i])}</strong><span>${display}</span></div>`;
+  // Build left HTML using previewSelection to filter fields
+  function buildLeftHtml(){
+    let leftHtml = '';
+    for(let i=0;i<24;i++){
+      // If previewSelection has explicit entries, only show those checked; otherwise show all
+      if(Object.keys(previewSelection).length > 0){
+        // If this index is not selected, skip
+        if(!previewSelection[i]) continue;
+      }
+      const val = getFieldByIndex(i);
+      const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
+      leftHtml += `<div class="field"><strong>${String.fromCharCode(65+i)} — ${escapeHtml(labels[i])}</strong><span>${display}</span></div>`;
+    }
+    splitLeft.innerHTML = leftHtml || '<div class="small" style="color:var(--brand-gray)">No hay campos seleccionados para mostrar.</div>';
   }
-  splitLeft.innerHTML = leftHtml;
 
   // Right: PDF iframe
   const pdfUrl = record.pdfUrl || record[COL_INDEX.pdf] || record['Link_PDF'] || record['link_pdf'] || '';
   const preview = transformToPreviewUrl(String(pdfUrl || ''));
   detailPdfFrame.src = preview || '';
+
+  // Initialize checkboxes to current previewSelection
+  chkD.checked = !!previewSelection[3];
+  chkM.checked = !!previewSelection[12];
+  chkO.checked = !!previewSelection[14];
+  chkX.checked = !!previewSelection[23];
+
+  // Wire checkbox changes to update previewSelection and re-render left panel
+  [chkD, chkM, chkO, chkX].forEach(chk => {
+    chk.onchange = () => {
+      const idx = Number(chk.dataset.idx);
+      previewSelection[idx] = chk.checked;
+      buildLeftHtml();
+    };
+  });
+
+  // Initial render
+  buildLeftHtml();
 
   // Show modal
   detailModal.style.display = 'flex';
@@ -856,6 +915,7 @@ detailClose.addEventListener('click', () => {
   detailModal.style.display = 'none';
   detailModal.setAttribute('aria-hidden','true');
   detailPdfFrame.src = '';
+  currentDetailRecord = null;
 });
 
 /* Apply decision from detail modal */
