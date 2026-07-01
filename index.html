@@ -255,7 +255,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
   </div>
 </div>
 
-<!-- Split details modal (used inside supervisor overlay and advisor view) -->
+<!-- Split details modal (used only when Ver detalles is clickeado) -->
 <div id="detailModal" style="display:none;position:fixed;inset:0;z-index:2500;align-items:center;justify-content:center;padding:20px;">
   <div style="width:100%;max-width:1200px;background:var(--card-bg);border-radius:12px;box-shadow:0 20px 60px rgba(35,31,32,0.25);overflow:hidden;display:flex;flex-direction:column;height:90vh;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.04)">
@@ -266,7 +266,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       </div>
     </div>
 
-    <!-- Preview selection controls (user can choose which columns to show as PDF previews) -->
+    <!-- Preview selection controls (user can choose which PDF columns to preview) -->
     <div style="padding:12px;border-bottom:1px solid rgba(35,31,32,0.04);background:linear-gradient(180deg,#fff,#fbfbff)">
       <div class="preview-controls" aria-label="Controles de vista previa">
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -503,6 +503,7 @@ async function searchSerial(){
 
 function renderSearchResults(list){
   const rows = list.map(r => {
+    // Advisor view keeps a small PDF preview cell (search panel)
     const pdfHtml = pdfCell(r.pdfUrl || r[COL_INDEX.pdf] || '');
     return `<tr data-serial="${escapeAttr(String(r.serial||''))}">
       <td class="serial">${escapeHtml(r.serial||'')}</td>
@@ -634,14 +635,19 @@ btnRefresh.addEventListener('click', async () => {
   }
 });
 
-/* Render pending table (supervisor) */
+/* Render pending table (supervisor)
+   IMPORTANT: No PDF preview in the supervisor list.
+   Only a simple "Abrir" link (if exists) is shown to open the PDF in a new tab.
+*/
 function renderPendingTable(list){
   if(!Array.isArray(list) || list.length === 0){
     pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>';
     return;
   }
   const rows = list.map(item => {
-    const pdfHtml = pdfCell(item.pdfUrl || item[COL_INDEX.pdf] || '');
+    // For supervisor list we show a simple link or indicator instead of embedded preview
+    const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
+    const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
     return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
       <td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
       <td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
@@ -651,7 +657,7 @@ function renderPendingTable(list){
       <td>${escapeHtml(item.modelo||'')}</td>
       <td>${escapeHtml(item.email||'')}</td>
       <td>${escapeHtml(item.telefono||'')}</td>
-      <td>${pdfHtml}</td>
+      <td>${pdfCellSimple}</td>
       <td>
         <select class="actionSelect">
           <option value="">-- Acción --</option>
@@ -665,7 +671,7 @@ function renderPendingTable(list){
   }).join('');
   pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   attachPendingListeners();
-  attachPdfClicks();
+  // Note: no attachPdfClicks for supervisor list because there are no embedded previews there
 }
 
 /* Attach listeners for apply buttons and view details in pending table */
@@ -716,7 +722,7 @@ async function onApplyClick(e){
   }
 }
 
-/* View details click (supervisor) */
+/* View details click (supervisor or advisor) - opens full split modal with ALL fields A..X and PDF previews */
 function onViewDetailsClick(e){
   const serial = e.currentTarget.dataset.serial;
   const context = e.currentTarget.dataset.context || 'supervisor';
@@ -795,9 +801,9 @@ btnCheckDuplicates.addEventListener('click', async () => {
 
 /* ============================
    Details modal (split view) with PDF previews for D, M, O, X
-   - IMPORTANT CHANGE: left panel now shows ALL fields A..X for full comparison
-   - Preview selection still controls which PDF columns are shown as tabs/iframe
-   ============================ */
+   - Left panel now shows ALL fields A..X for full comparison
+   - PDF previews are only rendered here when user clicks "Ver detalles"
+*/
 function openDetailModal(record, opts = { context: 'advisor' }){
   const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
   currentDetailRecord = record;
@@ -1029,7 +1035,7 @@ function onResultViewDetails(e){
 }
 
 /* ============================
-   PDF click handlers
+   PDF click handlers for advisor search previews
    ============================ */
 function attachPdfClicks(){
   // replace nodes to remove previous listeners
@@ -1055,7 +1061,7 @@ function renderEstatusBadge(text){
 }
 
 /* ============================
-   PDF cell builder
+   PDF cell builder (used only in advisor search results)
    ============================ */
 function pdfCell(url){
   if(!url) return '<div style="color:var(--brand-gray)">Sin PDF</div>';
