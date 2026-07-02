@@ -138,6 +138,9 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .small{font-size:13px;color:var(--brand-gray)}
 .actions-cell{display:flex;gap:8px;align-items:center}
 
+/* Duplicate highlight */
+.duplicate-row{background:linear-gradient(90deg, rgba(255,200,200,0.25), rgba(255,240,240,0.25));}
+
 /* Disabled action hint */
 .disabled-hint{color:var(--brand-gray);font-size:13px;margin-right:auto}
 
@@ -198,7 +201,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 
     <div class="super-panel" id="superPanel" style="margin-top:14px">
       <strong>Panel Supervisor</strong>
-      <p class="meta">Introduce la contraseña para ver registros en estado <em>PENDIENTE</em> y entrar al modo supervisor profesional.</p>
+      <p class="meta">Introduce la **contraseña** de supervisor para ver registros en estado <em>PENDIENTE</em> y entrar al modo supervisor profesional.</p>
 
       <div class="form-row" style="margin-top:10px;display:flex;gap:8px;align-items:center">
         <input id="superPass" type="password" placeholder="Contraseña supervisor" />
@@ -236,12 +239,12 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       <input id="superSearch" type="text" placeholder="Buscar en pendientes (serie, cliente, email, modelo...)" style="padding:10px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);flex:1" />
       <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
       <button id="btnCheckDuplicates" class="btn">Verificar duplicados</button>
+      <button id="btnBatchActions" class="btn ghost" title="Acciones en lote">Acciones en lote</button>
     </div>
   </div>
 
   <div class="super-main">
     <div class="super-left" id="pendingArea" aria-label="Lista de pendientes">
-      <!-- Tabla de pendientes inyectada -->
       <div class="small" style="margin-bottom:8px;color:var(--brand-gray)">Pendientes cargados</div>
       <div id="pendingContainer"></div>
     </div>
@@ -349,12 +352,7 @@ let supervisorPassValue = '';
 let currentDetailRecord = null;
 
 // Default preview selection (D, M, O, X)
-const previewSelection = {
-  3: true,   // D
-  12: true,  // M
-  14: true,  // O
-  23: true   // X
-};
+const previewSelection = { 3:true, 12:true, 14:true, 23:true };
 
 /* ============================
    DOM Elements
@@ -375,6 +373,7 @@ const btnRefresh = document.getElementById('btnRefresh');
 const pendingContainer = document.getElementById('pendingContainer');
 const superSearch = document.getElementById('superSearch');
 const btnCheckDuplicates = document.getElementById('btnCheckDuplicates');
+const btnBatchActions = document.getElementById('btnBatchActions');
 const superUserMeta = document.getElementById('superUserMeta');
 const autorizaSelect = document.getElementById('autorizaSelect');
 
@@ -455,6 +454,7 @@ function setLoading(state, message){
   btnRefresh.disabled = loading;
   btnLogin.disabled = loading;
   btnCheckDuplicates.disabled = loading;
+  btnBatchActions.disabled = loading;
   if(state){
     status.textContent = message || 'Cargando...';
   } else {
@@ -483,7 +483,6 @@ async function searchSerial(){
     const data = await res.json();
     if(Array.isArray(data) && data.length>0){
       lastSearchResults = data;
-      // populate recordMap for quick access
       data.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
       renderSearchResults(data);
       status.textContent = `${data.length} resultado(s)`;
@@ -502,7 +501,6 @@ async function searchSerial(){
 
 function renderSearchResults(list){
   const rows = list.map(r => {
-    // Advisor view keeps a small PDF preview cell (search panel)
     const pdfHtml = pdfCell(r.pdfUrl || r[COL_INDEX.pdf] || '');
     return `<tr data-serial="${escapeAttr(String(r.serial||''))}">
       <td class="serial">${escapeHtml(r.serial||'')}</td>
@@ -555,13 +553,14 @@ copyRow.addEventListener('click', async () => {
 });
 
 /* ============================
-   Supervisor: login & overlay
+   Supervisor: password-only login & overlay
    ============================ */
 btnLogin.addEventListener('click', async () => {
   const pass = superPass.value.trim();
   if(!pass){ alert('Introduce contraseña'); return; }
-  setLoading(true, 'Verificando credenciales...');
+  setLoading(true, 'Verificando contraseña...');
   try {
+    // Keep password-only flow: call backend action 'pending' with pass to validate
     const url = new URL(WEBAPP_URL);
     url.searchParams.set('action','pending');
     url.searchParams.set('pass', pass);
@@ -569,16 +568,17 @@ btnLogin.addEventListener('click', async () => {
     if(!res.ok) throw new Error('No autorizado');
     const data = await res.json();
     if(data && data.error) throw new Error(data.error);
-    // success
+    // success: backend returns array of pending records
     supervisorLogged = true;
     supervisorPassValue = pass;
     pendingRecords = Array.isArray(data) ? data : [];
-    // populate recordMap
     pendingRecords.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
     openSupervisorOverlay();
     renderPendingTable(pendingRecords);
     superPass.value = '';
-    superUserMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+    superUserMeta.textContent = `Modo Supervisor (contraseña) • Pendientes: ${pendingRecords.length}`;
+    btnLogout.style.display = 'inline-block';
+    btnLogin.style.display = 'none';
   } catch(err){
     console.error(err);
     alert('Acceso denegado');
@@ -625,7 +625,7 @@ btnRefresh.addEventListener('click', async () => {
     pendingRecords = Array.isArray(data) ? data : [];
     pendingRecords.forEach(r => { if(r && r.serial) recordMap.set(String(r.serial), r); });
     renderPendingTable(pendingRecords);
-    superUserMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+    superUserMeta.textContent = `Modo Supervisor (contraseña) • Pendientes: ${pendingRecords.length}`;
   } catch(err){
     console.error(err);
     alert('Error al cargar pendientes');
@@ -634,28 +634,35 @@ btnRefresh.addEventListener('click', async () => {
   }
 });
 
-/* Render pending table (supervisor)
-   IMPORTANT: No PDF preview in the supervisor list.
-   Only a simple "Abrir" link (if exists) is shown to open the PDF in a new tab.
-*/
+/* ============================
+   Render pending table (supervisor) - optimized: no embedded previews
+   ============================ */
 function renderPendingTable(list){
   if(!Array.isArray(list) || list.length === 0){
     pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>';
     return;
   }
   const rows = list.map(item => {
-    // For supervisor list we show a simple link or indicator instead of embedded preview
     const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
     const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
+    // Evidence badges for D(3), M(12), O(14), X(23)
+    const has = idx => {
+      const v = getFieldByIndexForRender(item, idx);
+      return v && String(v).trim() !== '';
+    };
+    const evidenceBadges = [
+      has(3) ? '<span class="small" style="color:green">D</span>' : '<span class="small" style="color:#ef4444">D✕</span>',
+      has(12) ? '<span class="small" style="color:green">M</span>' : '<span class="small" style="color:#ef4444">M✕</span>',
+      has(14) ? '<span class="small" style="color:green">O</span>' : '<span class="small" style="color:#ef4444">O✕</span>',
+      has(23) ? '<span class="small" style="color:green">X</span>' : '<span class="small" style="color:#ef4444">X✕</span>'
+    ].join(' ');
     return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
       <td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
       <td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
       <td>${escapeHtml(isLikelyDate(item.fecha) ? formatDate(item.fecha) : (item[COL_INDEX.fecha]||''))}</td>
       <td>${renderEstatusBadge(item.estatus||item[COL_INDEX.estatus])}</td>
-      <td>${escapeHtml(item.usuario||'')}</td>
       <td>${escapeHtml(item.modelo||'')}</td>
-      <td>${escapeHtml(item.email||'')}</td>
-      <td>${escapeHtml(item.telefono||'')}</td>
+      <td>${evidenceBadges}</td>
       <td>${pdfCellSimple}</td>
       <td>
         <select class="actionSelect">
@@ -668,9 +675,18 @@ function renderPendingTable(list){
       </td>
     </tr>`;
   }).join('');
-  pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   attachPendingListeners();
-  // Note: no attachPdfClicks for supervisor list because there are no embedded previews there
+}
+
+/* Helper to extract field by index for rendering */
+function getFieldByIndexForRender(record, idx){
+  const keyByIndex = Object.keys(COL_INDEX).find(k => COL_INDEX[k] === idx);
+  if(keyByIndex && record[keyByIndex]) return record[keyByIndex];
+  const letter = String.fromCharCode(65 + idx);
+  if(record[letter]) return record[letter];
+  if(record[idx]) return record[idx];
+  return '';
 }
 
 /* Attach listeners for apply buttons and view details in pending table */
@@ -687,6 +703,7 @@ function attachPendingListeners(){
   });
 }
 
+/* Apply single decision */
 async function onApplyClick(e){
   if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
   const tr = e.target.closest('tr');
@@ -750,43 +767,38 @@ superSearch.addEventListener('input', () => {
   renderPendingTable(filtered);
 });
 
-/* Duplicate check: compare pending serials against authorized records in recordMap or by fetching authorized list */
+/* Duplicate check: compare pending serials against authorized records */
 btnCheckDuplicates.addEventListener('click', async () => {
   if(!supervisorLogged) return alert('No autorizado');
   setLoading(true, 'Verificando duplicados...');
   try {
-    // Strategy: fetch authorized records from server (action=authorized) if available, else check recordMap for any with estatus AUTORIZADO
+    // Try backend endpoint 'authorized' first
     let authorizedList = [];
     try {
       const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','authorized'); // backend may support this
+      url.searchParams.set('action','authorized');
       const res = await fetch(url.toString());
       if(res.ok){
         const data = await res.json();
         if(Array.isArray(data)) authorizedList = data;
       }
-    } catch(e){
-      // ignore and fallback
-    }
-    // Build set of authorized serials
+    } catch(e){}
     const authSet = new Set();
     if(authorizedList.length>0){
       authorizedList.forEach(r => { if(r && r.serial) authSet.add(String(r.serial)); });
     } else {
-      // fallback: scan recordMap for estatus AUTORIZADO
       for(const [k,v] of recordMap.entries()){
         const st = (v.estatus || v[COL_INDEX.estatus] || '').toString().toUpperCase();
         if(st === 'AUTORIZADO') authSet.add(String(k));
       }
     }
-    // Check pendingRecords for duplicates
     const duplicates = pendingRecords.filter(r => authSet.has(String(r.serial)));
     if(duplicates.length === 0){
       alert('No se detectaron duplicados en los pendientes.');
     } else {
       duplicates.forEach(d => {
         const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d.serial))}"]`);
-        if(tr) tr.style.background = 'linear-gradient(90deg, rgba(255,200,200,0.25), rgba(255,240,240,0.25))';
+        if(tr) tr.classList.add('duplicate-row');
       });
       alert(`Se detectaron ${duplicates.length} registro(s) que ya fueron AUTORIZADOS anteriormente. Revisa las filas resaltadas antes de autorizar.`);
     }
@@ -799,15 +811,114 @@ btnCheckDuplicates.addEventListener('click', async () => {
 });
 
 /* ============================
+   Batch actions (simple UI flow)
+   ============================ */
+btnBatchActions.addEventListener('click', () => {
+  if(!supervisorLogged) return alert('No autorizado');
+  // Build selection UI: add checkboxes to rows if not present
+  const table = pendingContainer.querySelector('table.pending-table');
+  if(!table) return alert('No hay pendientes para seleccionar');
+  // Toggle selection mode
+  const inSelection = table.querySelector('thead th.select-col');
+  if(!inSelection){
+    // add header checkbox
+    const th = document.createElement('th'); th.className = 'select-col'; th.innerHTML = '<input id="selectAll" type="checkbox" />';
+    table.querySelector('thead tr').insertBefore(th, table.querySelector('thead tr').children[0]);
+    // add checkboxes to each row
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const td = document.createElement('td');
+      td.innerHTML = `<input class="row-select" type="checkbox" data-serial="${escapeAttr(tr.dataset.serial)}" />`;
+      tr.insertBefore(td, tr.children[0]);
+    });
+    document.getElementById('selectAll').addEventListener('change', (e) => {
+      table.querySelectorAll('.row-select').forEach(cb => cb.checked = e.target.checked);
+    });
+    btnBatchActions.textContent = 'Aplicar acción en seleccionados';
+    btnBatchActions.classList.remove('btn','ghost'); btnBatchActions.classList.add('btn');
+    // repurpose click to open action dialog
+    btnBatchActions.onclick = async () => {
+      const selected = Array.from(table.querySelectorAll('.row-select:checked')).map(cb => cb.dataset.serial);
+      if(selected.length === 0) return alert('No hay registros seleccionados');
+      const action = prompt(`Acción para ${selected.length} registros (AUTORIZADO / RECHAZADO):`);
+      if(!action) return;
+      const autorizador = autorizaSelect.value || '';
+      if(!confirm(`Confirmar ${action} para ${selected.length} serie(s) como ${autorizador}?`)) return;
+      setLoading(true, 'Aplicando acción en lote...');
+      try {
+        // Prefer backend batch endpoint; fallback to sequential updates
+        const url = new URL(WEBAPP_URL);
+        url.searchParams.set('action','updateBatch');
+        url.searchParams.set('serials', JSON.stringify(selected));
+        url.searchParams.set('newStatus', action);
+        url.searchParams.set('autorizador', autorizador);
+        url.searchParams.set('pass', supervisorPassValue);
+        const res = await fetch(url.toString());
+        if(res.ok){
+          const data = await res.json();
+          if(data && data.ok){
+            alert('Lote actualizado');
+            await btnRefresh.click();
+          } else {
+            // fallback: sequential
+            for(const s of selected){
+              await applySingleUpdate(s, action, autorizador);
+            }
+            alert('Lote actualizado (secuencial)');
+            await btnRefresh.click();
+          }
+        } else {
+          // fallback sequential
+          for(const s of selected){
+            await applySingleUpdate(s, action, autorizador);
+          }
+          alert('Lote actualizado (secuencial)');
+          await btnRefresh.click();
+        }
+      } catch(err){
+        console.error(err);
+        alert('Error al aplicar lote');
+      } finally {
+        setLoading(false);
+      }
+    };
+  } else {
+    // already in selection mode: remove selection UI
+    // remove first column from header and rows
+    table.querySelectorAll('thead th.select-col').forEach(th => th.remove());
+    table.querySelectorAll('tbody tr').forEach(tr => tr.removeChild(tr.children[0]));
+    btnBatchActions.textContent = 'Acciones en lote';
+    btnBatchActions.classList.remove('btn'); btnBatchActions.classList.add('btn','ghost');
+    btnBatchActions.onclick = null;
+  }
+});
+
+async function applySingleUpdate(serial, action, autorizador){
+  try {
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','update');
+    url.searchParams.set('serial', serial);
+    url.searchParams.set('newStatus', action);
+    url.searchParams.set('autorizador', autorizador);
+    url.searchParams.set('pass', supervisorPassValue);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('Error servidor');
+    const data = await res.json();
+    return data && data.ok;
+  } catch(e){
+    console.error(e);
+    return false;
+  }
+}
+
+/* ============================
    Details modal (split view) with PDF previews for D, M, O, X
-   - Left panel now shows ALL fields A..X for full comparison
+   - Left panel shows ALL fields A..X for full comparison
    - PDF previews are only rendered here when user clicks "Ver detalles"
 */
 function openDetailModal(record, opts = { context: 'advisor' }){
-  const context = opts.context || 'advisor'; // 'advisor' or 'supervisor'
+  const context = opts.context || 'advisor';
   currentDetailRecord = record;
 
-  // Labels A..X
   const labels = [
     'Marca temporal','Dirección de correo electrónico','Tipo de Solicitud','Factura de compra de la unidad',
     'Nombre del cliente','Correo del cliente','Numero celular del cliente','Modelo de la Unidad',
@@ -817,7 +928,6 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     'Fecha de aprobación','AUTORIZADO POR','Comentarios','Link_PDF'
   ];
 
-  // Helper to get by COL_INDEX or common keys
   function getFieldByIndex(idx){
     const keyByIndex = Object.keys(COL_INDEX).find(k => COL_INDEX[k] === idx);
     if(keyByIndex && record[keyByIndex] !== undefined && record[keyByIndex] !== null) return record[keyByIndex];
@@ -857,17 +967,15 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     return '';
   }
 
-  // Build left HTML: show ALL fields A..X for full comparison
+  // Build left HTML: show ALL fields A..X
   function buildLeftHtml(){
     let leftHtml = '';
-    // Quick keys for validation (kept at top)
     const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
     quickKeys.forEach(k => {
       const val = record && (record[k] !== undefined && record[k] !== null) ? record[k] : (record[COL_INDEX[k]] || '');
       leftHtml += `<div class="field"><strong>${k.charAt(0).toUpperCase()+k.slice(1)}</strong><span>${escapeHtml(isLikelyDate(val) ? formatDate(val) : String(val || ''))}</span></div>`;
     });
     leftHtml += '<hr style="border:none;border-top:1px solid rgba(35,31,32,0.06);margin:8px 0">';
-    // Show ALL A..X fields (always)
     for(let i=0;i<24;i++){
       const val = getFieldByIndex(i);
       const display = (val === null || val === undefined || val === '') ? '<span class="small">— vacío —</span>' : (isLikelyDate(val) ? escapeHtml(formatDate(val)) : (i===23 ? `<a href="${escapeAttr(String(val))}" target="_blank" rel="noopener">Abrir PDF</a>` : escapeHtml(String(val))));
@@ -884,11 +992,9 @@ function openDetailModal(record, opts = { context: 'advisor' }){
       if(!previewSelection[idx]) return;
       const raw = getFieldByIndex(idx);
       if(!raw) return;
-      // raw may be a URL or an object; try to extract URL-like string
       let url = '';
       if(typeof raw === 'string') url = raw.trim();
       else if(typeof raw === 'object' && raw !== null){
-        // common keys
         url = raw.pdfUrl || raw.link || raw.url || raw.Link_PDF || raw.link_pdf || '';
       }
       if(url){
@@ -908,7 +1014,6 @@ function openDetailModal(record, opts = { context: 'advisor' }){
       detailPdfFrame.src = '';
       return;
     }
-    // Create tabs
     previews.forEach((p, i) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -916,52 +1021,44 @@ function openDetailModal(record, opts = { context: 'advisor' }){
       btn.textContent = `${p.label} • ${p.title}`;
       btn.dataset.url = p.url;
       btn.addEventListener('click', () => {
-        // deactivate siblings
         previewTabsContainer.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
         detailPdfFrame.src = p.url;
       });
       previewTabsContainer.appendChild(btn);
     });
-    // set first preview
     detailPdfFrame.src = previews[0].url;
   }
 
-  // Initialize checkboxes to current previewSelection
+  // Initialize checkboxes
   chkD.checked = !!previewSelection[3];
   chkM.checked = !!previewSelection[12];
   chkO.checked = !!previewSelection[14];
   chkX.checked = !!previewSelection[23];
 
-  // Wire checkbox changes to update previewSelection and re-render left panel + previews
   [chkD, chkM, chkO, chkX].forEach(chk => {
     chk.onchange = () => {
       const idx = Number(chk.dataset.idx);
       previewSelection[idx] = chk.checked;
-      // left panel remains full A..X (no filtering) but we still rebuild it to reflect any dynamic values
       buildLeftHtml();
       renderPreviewArea();
     };
   });
 
-  // Initial render
   buildLeftHtml();
   renderPreviewArea();
 
-  // Context-aware actions: only enable approve/reject when supervisorLogged AND context === 'supervisor'
   const actionsEnabled = (context === 'supervisor' && supervisorLogged);
   btnAuthorize.disabled = !actionsEnabled;
   btnReject.disabled = !actionsEnabled;
   detailAutoriza.disabled = !actionsEnabled;
 
-  // Show hint when actions disabled
   if(!actionsEnabled){
     detailModeHint.textContent = 'Acciones deshabilitadas: requiere Modo Supervisor activo';
   } else {
     detailModeHint.textContent = '';
   }
 
-  // Wire action buttons (use serial from record)
   btnAuthorize.onclick = () => {
     if(!supervisorLogged) return alert('Acción restringida: requiere Modo Supervisor activo');
     applyDecision(record.serial, 'AUTORIZADO', detailAutoriza.value || autorizaSelect.value);
@@ -971,7 +1068,6 @@ function openDetailModal(record, opts = { context: 'advisor' }){
     applyDecision(record.serial, 'RECHAZADO', detailAutoriza.value || autorizaSelect.value);
   };
 
-  // Show modal
   detailModal.style.display = 'flex';
   detailModal.setAttribute('aria-hidden','false');
 }
@@ -1001,7 +1097,6 @@ async function applyDecision(serial, action, autorizador){
     const data = await res.json();
     if(data && data.ok){
       alert('Actualizado');
-      // refresh pending list
       await btnRefresh.click();
       detailModal.style.display = 'none';
     } else {
@@ -1029,7 +1124,6 @@ function onResultViewDetails(e){
   const serial = e.currentTarget.dataset.serial;
   const rec = recordMap.get(serial);
   if(!rec) return alert('Registro no disponible');
-  // Open modal in advisor context (actions disabled)
   openDetailModal(rec, { context: 'advisor' });
 }
 
@@ -1037,7 +1131,6 @@ function onResultViewDetails(e){
    PDF click handlers for advisor search previews
    ============================ */
 function attachPdfClicks(){
-  // replace nodes to remove previous listeners
   document.querySelectorAll('.pdf-preview').forEach(el => {
     const clone = el.cloneNode(true);
     el.parentNode.replaceChild(clone, el);
@@ -1078,7 +1171,6 @@ serialInput.focus();
 
 /* ============================
    Small: include two sentences from the uploaded document for traceability
-   (These lines are present in the original HTML you provided.)
    ============================ */
 // "BD Extension de garantias — Panel"
 // "Búsqueda por número de serie"
