@@ -43,11 +43,8 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .pdf-preview{width:120px;height:140px;border-radius:10px;overflow:hidden;border:1px solid rgba(35,31,32,0.06);display:flex;align-items:center;justify-content:center;background:var(--glass)}
 .pdf-preview iframe{width:100%;height:100%;border:0}
 .empty{padding:22px;text-align:center;color:var(--brand-gray);border-radius:10px;background:linear-gradient(180deg,rgba(242,143,23,0.03),transparent)}
-.super-overlay{position:fixed;inset:0;z-index:2000;background:var(--bg-soft);display:none;flex-direction:column;padding:18px}
-.super-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.super-main{flex:1;display:flex;gap:12px;overflow:hidden}
-.super-left{width:48%;background:var(--card-bg);border-radius:12px;padding:12px;overflow:auto;border:1px solid rgba(35,31,32,0.04)}
-.super-right{flex:1;background:var(--card-bg);border-radius:12px;padding:12px;overflow:auto;border:1px solid rgba(35,31,32,0.04)}
+.pending-section{margin-top:18px}
+.pending-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
 .pending-table{width:100%;border-collapse:collapse}
 .pending-table thead th{padding:10px;font-size:13px;text-align:left;color:var(--brand-gray);border-bottom:1px solid rgba(35,31,32,0.04)}
 .pending-table td{padding:8px;border-bottom:1px solid rgba(35,31,32,0.03);font-size:13px}
@@ -66,8 +63,8 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 .disabled-hint{color:var(--brand-gray);font-size:13px;margin-right:auto}
 .preview-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
 .preview-controls label{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--brand-black)}
-@media (max-width:1000px){table.results{min-width:800px}.super-left{width:45%}}
-@media (max-width:760px){body{padding:12px}.logo{width:48px;height:48px}.wrap{padding:6px}table.results{min-width:700px}.super-main{flex-direction:column}.super-left{width:100%}.super-right{width:100%}.split-modal{flex-direction:column;height:70vh}.split-left{width:100%}.split-right{width:100%}}
+@media (max-width:1000px){table.results{min-width:800px}}
+@media (max-width:760px){body{padding:12px}.logo{width:48px;height:48px}.wrap{padding:6px}table.results{min-width:700px}.split-modal{flex-direction:column;height:70vh}.split-left{width:100%}.split-right{width:100%}}
 </style>
 </head>
 <body>
@@ -76,7 +73,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
     <div class="logo" aria-hidden>V</div>
     <div>
       <h1>BD Extensión de garantías</h1>
-      <p class="subtitle">Búsqueda por número de serie • Panel supervisor</p>
+      <p class="subtitle">Búsqueda por número de serie • Validación</p>
     </div>
     <div style="margin-left:auto" class="meta">Interfaz Vento</div>
   </header>
@@ -98,64 +95,27 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       <div id="resultArea" class="result-area" role="region" aria-label="Resultados de búsqueda"></div>
     </div>
 
-    <div class="super-panel" id="superPanel" style="margin-top:14px">
-      <strong>Panel Supervisor</strong>
-      <p class="meta">Introduce la <strong>contraseña</strong> para autorizar/rechazar. Ver pendientes automáticamente cargados abajo.</p>
-      <div class="form-row" style="margin-top:10px;display:flex;gap:8px;align-items:center">
-        <input id="superPass" type="password" placeholder="Contraseña supervisor" />
-        <button id="btnLogin" class="btn">Entrar (Ver pendientes)</button>
-        <button id="btnLogout" class="btn ghost" style="display:none">Salir</button>
+    <!-- Pendientes integrados en la vista principal -->
+    <div class="pending-section" id="pendingSection">
+      <div class="pending-header">
+        <div>
+          <strong>Pendientes</strong>
+          <div class="small" id="pendingMeta">Cargando pendientes...</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="superPassInline" type="password" placeholder="Contraseña (solo para aprobar/rechazar)" style="padding:8px;border-radius:8px;border:1px solid rgba(35,31,32,0.06)" />
+          <button id="btnRefresh" class="btn ghost">Refrescar</button>
+          <button id="btnCheckDuplicates" class="btn">Verificar duplicados</button>
+          <button id="btnBatchActions" class="btn ghost">Acciones en lote</button>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Supervisor overlay -->
-<div id="superOverlay" class="super-overlay" role="dialog" aria-modal="true" aria-hidden="true">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <div style="display:flex;gap:12px;align-items:center">
-      <div class="logo" aria-hidden style="width:44px;height:44px;font-size:18px">V</div>
-      <div>
-        <h1 style="font-size:18px;margin:0">Modo Supervisor</h1>
-        <div class="small" id="superUserMeta">Sesión activa</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <label class="small" style="margin-right:6px">Autoriza como:</label>
-      <select id="autorizaSelect">
-        <option value="CESAR">CESAR</option>
-        <option value="IVAN">IVAN</option>
-        <option value="ANGEL">ANGEL</option>
-        <option value="CECILIA">CECILIA</option>
-      </select>
-      <button id="btnExitSupervisor" class="btn ghost">Salir de Modo Supervisor</button>
-    </div>
-  </div>
-
-  <div class="super-top">
-    <div style="flex:1;display:flex;gap:8px;align-items:center">
-      <input id="superSearch" type="text" placeholder="Buscar en pendientes (serie, cliente, email, modelo...)" style="padding:10px;border-radius:10px;border:1px solid rgba(35,31,32,0.06);flex:1" />
-      <button id="btnRefresh" class="btn ghost">Refrescar pendientes</button>
-      <button id="btnCheckDuplicates" class="btn">Verificar duplicados</button>
-      <button id="btnBatchActions" class="btn ghost">Acciones en lote</button>
-    </div>
-  </div>
-
-  <div class="super-main">
-    <div class="super-left" id="pendingArea" aria-label="Lista de pendientes">
-      <div class="small" style="margin-bottom:8px;color:var(--brand-gray)">Pendientes cargados</div>
       <div id="pendingContainer"></div>
     </div>
 
-    <div class="super-right" id="superRight" aria-label="Panel de trabajo">
-      <div id="workArea" style="height:100%;display:flex;flex-direction:column;gap:8px">
-        <div id="detailArea" style="flex:1;overflow:auto"></div>
-      </div>
-    </div>
   </div>
 </div>
 
-<!-- Detail modal -->
+<!-- Detail modal (split view A..X + previews) -->
 <div id="detailModal" style="display:none;position:fixed;inset:0;z-index:2500;align-items:center;justify-content:center;padding:20px;">
   <div style="width:100%;max-width:1200px;background:var(--card-bg);border-radius:12px;box-shadow:0 20px 60px rgba(35,31,32,0.25);overflow:hidden;display:flex;flex-direction:column;height:90vh;">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(35,31,32,0.04)">
@@ -206,21 +166,19 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
 /* ============================
    CONFIG
    ============================ */
-// Cambia esta URL por la de tu WebApp si es necesario
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz-kBTZySqCBfqzMSfhBo9pZ-bkuCtdhenb2B58zhjLVReWrJbOWa09oG7toE8zjSVF/exec';
 
-/* Mapeo de columnas */
+/* Column mapping */
 const COL_INDEX = {
   fecha:0,emailRemitente:1,tipoSolicitud:2,facturaCompra:3,cliente:4,correoCliente:5,telefonoCliente:6,modelo:7,
   serial:8,fechaFactura:9,fechaEntrega:10,ticketAYA:11,evidenciaEntrega:12,ticketReparacion:13,evidenciaTaller:14,
   fechaIngresoTaller:15,fechaSalidaTaller:16,folio:17,fechaLimiteServicio:18,estatus:19,fechaDecision:20,autorizadoPor:21,comentarios:22,pdf:23
 };
 
-/* Estado */
+/* State */
 let pendingRecords = [];
 const recordMap = new Map();
-let supervisorLogged = false;
-let supervisorPassValue = '';
+let supervisorPassValue = ''; // only stored temporarily when validated for actions
 let currentDetailRecord = null;
 let previewSelection = {3:true,12:true,14:true,23:true};
 
@@ -232,19 +190,13 @@ const status = document.getElementById('status');
 const resultArea = document.getElementById('resultArea');
 const copyRow = document.getElementById('copyRow');
 
-const superPass = document.getElementById('superPass');
-const btnLogin = document.getElementById('btnLogin');
-const btnLogout = document.getElementById('btnLogout');
-const btnExitSupervisor = document.getElementById('btnExitSupervisor');
-const superOverlay = document.getElementById('superOverlay');
+const superPassInline = document.getElementById('superPassInline');
 const btnRefresh = document.getElementById('btnRefresh');
 const pendingContainer = document.getElementById('pendingContainer');
-const superSearch = document.getElementById('superSearch');
+const pendingMeta = document.getElementById('pendingMeta');
+const superSearch = document.getElementById('superSearch'); // not used but kept for compatibility
 const btnCheckDuplicates = document.getElementById('btnCheckDuplicates');
 const btnBatchActions = document.getElementById('btnBatchActions');
-const superUserMeta = document.getElementById('superUserMeta');
-const autorizaSelect = document.getElementById('autorizaSelect');
-
 const detailModal = document.getElementById('detailModal');
 const detailClose = document.getElementById('detailClose');
 const splitLeft = document.getElementById('splitLeft');
@@ -253,34 +205,27 @@ const btnAuthorize = document.getElementById('btnAuthorize');
 const btnReject = document.getElementById('btnReject');
 const detailAutoriza = document.getElementById('detailAutoriza');
 const detailModeHint = document.getElementById('detailModeHint');
-
 const chkD = document.getElementById('chkD');
 const chkM = document.getElementById('chkM');
 const chkO = document.getElementById('chkO');
 const chkX = document.getElementById('chkX');
 const previewTabsContainer = document.getElementById('previewTabsContainer');
 
-/* ============================
-   UTILITIES
-   ============================ */
+/* Utilities */
 function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
 function isLikelyDate(v){ if(!v) return false; if(typeof v==='string' && (/^\d{4}-\d{2}-\d{2}T/.test(v) || /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(v) || v.startsWith('Date('))) return true; if(typeof v==='number') return true; return false; }
 function formatDate(raw){ if(!raw) return ''; if(typeof raw==='string' && raw.startsWith('Date(')){ const nums = raw.replace(/^Date\(|\)$/g,'').split(',').map(s=>s.trim()); const y=Number(nums[0]||0), m=Number(nums[1]||0), d=Number(nums[2]||1), hh=Number(nums[3]||0), mm=Number(nums[4]||0); return new Date(y,m,d,hh,mm).toLocaleString(); } if(typeof raw==='string' && /^\d{4}-\d{2}-\d{2}T/.test(raw)) return new Date(raw).toLocaleString(); if(typeof raw==='string' && /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(raw)) return raw; if(typeof raw==='number'){ try{return new Date(raw).toLocaleString()}catch(e){} } return String(raw); }
 function transformToPreviewUrl(raw){ try{ const u=new URL(raw); if(u.hostname.includes('drive.google.com')){ const m=raw.match(/\/file\/d\/([^\/]+)\/?/); if(m&&m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`; const id=u.searchParams.get('id'); if(id) return `https://drive.google.com/file/d/${id}/preview`; } if(raw.toLowerCase().endsWith('.pdf')) return raw; return raw; }catch(e){ return raw; } }
-function setLoading(state,message){ const loading=!!state; btnSearch.disabled=loading; btnRefresh.disabled=loading; btnLogin.disabled=loading; btnCheckDuplicates.disabled=loading; btnBatchActions.disabled=loading; if(state) status.textContent = message || 'Cargando...'; else status.textContent=''; }
+function setLoading(state,message){ const loading=!!state; btnSearch.disabled=loading; btnRefresh.disabled=loading; btnCheckDuplicates.disabled=loading; btnBatchActions.disabled=loading; if(state) status.textContent = message || 'Cargando...'; else status.textContent=''; }
 
-/* ============================
-   STARTUP: cargar pendientes automáticamente (intento sin contraseña)
-   ============================ */
-window.addEventListener('load', async () => {
+/* Startup: try to load pendientes (without password). If backend requires pass, show message and let user approve/reject by entering pass when needed. */
+window.addEventListener('load', async ()=>{
   serialInput.focus();
-  // Intentamos cargar pendientes sin pedir contraseña (si el backend lo permite)
   try {
     setLoading(true,'Cargando pendientes...');
     const url = new URL(WEBAPP_URL);
     url.searchParams.set('action','pending');
-    // No pasamos pass aquí: si el backend requiere pass, devolverá error y mostraremos aviso
     const res = await fetch(url.toString());
     if(res.ok){
       const data = await res.json();
@@ -288,25 +233,25 @@ window.addEventListener('load', async () => {
         pendingRecords = data;
         pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
         renderPendingTable(pendingRecords);
-        superUserMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+        pendingMeta.textContent = `Pendientes: ${pendingRecords.length}`;
       } else {
-        // Si backend exige pass, data puede ser error; mostramos mensaje y dejamos pendiente vacío
-        pendingContainer.innerHTML = '<div class="empty">Introduce contraseña para ver pendientes</div>';
+        pendingContainer.innerHTML = '<div class="empty">No hay pendientes visibles. Si tu backend requiere contraseña, introduce la contraseña al aprobar/rechazar.</div>';
+        pendingMeta.textContent = 'Pendientes: 0';
       }
     } else {
-      pendingContainer.innerHTML = '<div class="empty">Introduce contraseña para ver pendientes</div>';
+      pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
+      pendingMeta.textContent = 'Pendientes: —';
     }
   } catch(e){
     console.warn('No se pudieron cargar pendientes automáticamente',e);
-    pendingContainer.innerHTML = '<div class="empty">Introduce contraseña para ver pendientes</div>';
+    pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
+    pendingMeta.textContent = 'Pendientes: —';
   } finally {
     setLoading(false);
   }
 });
 
-/* ============================
-   BÚSQUEDA (asesor) — al buscar, mostramos resultados y también marcamos coincidencias con pendientes
-   ============================ */
+/* SEARCH (main). When searching, show search results; also include any matching pending records so user sees both contexts. */
 btnSearch.addEventListener('click', searchSerial);
 serialInput.addEventListener('keydown', e=>{ if(e.key==='Enter') searchSerial(); });
 btnClear.addEventListener('click', ()=>{ serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
@@ -324,19 +269,17 @@ async function searchSerial(){
     if(!res.ok) throw new Error('Error servidor');
     const data = await res.json();
     const list = Array.isArray(data) ? data : [];
-    // Fusionar con pendientes locales: si algún pendiente no aparece en search, añadirlo (para ver ambos)
-    const merged = [...list];
+    // Add pending matches not present in search results
     const serialsInSearch = new Set(list.map(r=>String(r.serial)));
     pendingRecords.forEach(p=>{
       if(p && p.serial && !serialsInSearch.has(String(p.serial)) && String(p.serial).toLowerCase().includes(serial.toLowerCase())){
-        merged.push(p);
+        list.push(p);
       }
-      // also ensure recordMap has it
       if(p && p.serial) recordMap.set(String(p.serial), p);
     });
-    if(merged.length>0){
-      renderSearchResults(merged);
-      status.textContent = `${merged.length} resultado(s)`;
+    if(list.length>0){
+      renderSearchResults(list);
+      status.textContent = `${list.length} resultado(s)`;
     } else {
       resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
       status.textContent = 'No encontrado';
@@ -370,9 +313,7 @@ function renderSearchResults(list){
   attachPdfClicks();
 }
 
-/* ============================
-   COPIAR fila visible (usa datos en memoria, no textContent)
-   ============================ */
+/* Copy first visible row from memory */
 copyRow.addEventListener('click', async ()=>{
   const table = resultArea.querySelector('table.results');
   if(!table){ alert('No hay resultados para copiar'); return; }
@@ -391,76 +332,9 @@ copyRow.addEventListener('click', async ()=>{
   try{ await navigator.clipboard.writeText(text); alert('Fila (JSON) copiada al portapapeles'); }catch(e){ console.error(e); alert('No se pudo copiar al portapapeles'); }
 });
 
-/* ============================
-   SUPERVISOR: entrar (ver pendientes) — se guarda pass solo para acciones posteriores
-   ============================ */
-btnLogin.addEventListener('click', async ()=>{
-  const pass = superPass.value.trim();
-  if(!pass){ alert('Introduce contraseña'); return; }
-  setLoading(true,'Verificando contraseña...');
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    url.searchParams.set('pass', pass);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('No autorizado');
-    const data = await res.json();
-    if(data && data.error) throw new Error(data.error);
-    // OK: backend devolvió pendientes
-    supervisorLogged = true;
-    supervisorPassValue = pass;
-    pendingRecords = Array.isArray(data) ? data : [];
-    pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
-    openSupervisorOverlay();
-    renderPendingTable(pendingRecords);
-    superPass.value='';
-    superUserMeta.textContent = `Modo Supervisor • Pendientes: ${pendingRecords.length}`;
-    btnLogout.style.display='inline-block';
-    btnLogin.style.display='none';
-  } catch(err){
-    console.error(err);
-    alert('Acceso denegado');
-  } finally {
-    setLoading(false);
-  }
-});
-
-btnExitSupervisor.addEventListener('click', exitSupervisorMode);
-btnLogout.addEventListener('click', exitSupervisorMode);
-
-function openSupervisorOverlay(){ superOverlay.style.display='flex'; superOverlay.setAttribute('aria-hidden','false'); btnLogout.style.display='inline-block'; btnLogin.style.display='none'; document.body.style.overflow='hidden'; }
-function exitSupervisorMode(){ supervisorLogged=false; supervisorPassValue=''; pendingRecords=[]; pendingContainer.innerHTML=''; superOverlay.style.display='none'; superOverlay.setAttribute('aria-hidden','true'); btnLogout.style.display='none'; btnLogin.style.display='inline-block'; document.body.style.overflow=''; superUserMeta.textContent='Sesión cerrada'; }
-
-/* ============================
-   REFRESH pendientes (requiere pass guardada) — si no hay pass, pide al usuario
-   ============================ */
-btnRefresh.addEventListener('click', async ()=>{
-  if(!supervisorLogged){ return alert('Activa Modo Supervisor para refrescar pendientes'); }
-  setLoading(true,'Cargando pendientes...');
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    url.searchParams.set('pass', supervisorPassValue);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('No autorizado');
-    const data = await res.json();
-    pendingRecords = Array.isArray(data) ? data : [];
-    pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
-    renderPendingTable(pendingRecords);
-    superUserMeta.textContent = `Modo Supervisor • Pendientes: ${pendingRecords.length}`;
-  } catch(err){
-    console.error(err);
-    alert('Error al cargar pendientes');
-  } finally {
-    setLoading(false);
-  }
-});
-
-/* ============================
-   RENDER PENDIENTES (sin previews embebidos)
-   ============================ */
+/* Render pending table (integrated in main) */
 function renderPendingTable(list){
-  if(!Array.isArray(list) || list.length===0){ pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>'; return; }
+  if(!Array.isArray(list) || list.length===0){ pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>'; pendingMeta.textContent='Pendientes: 0'; return; }
   const rows = list.map(item=>{
     const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
     const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
@@ -489,10 +363,11 @@ function renderPendingTable(list){
     </tr>`;
   }).join('');
   pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  pendingMeta.textContent = `Pendientes: ${list.length}`;
   attachPendingListeners();
 }
 
-/* Helper para extraer campo por índice */
+/* Helper to extract field by index */
 function getFieldByIndexForRender(record, idx){
   const keyByIndex = Object.keys(COL_INDEX).find(k=>COL_INDEX[k]===idx);
   if(keyByIndex && record[keyByIndex]) return record[keyByIndex];
@@ -502,9 +377,7 @@ function getFieldByIndexForRender(record, idx){
   return '';
 }
 
-/* ============================
-   LISTENERS PENDIENTES: aplicar y ver detalles
-   ============================ */
+/* Attach listeners for pending actions */
 function attachPendingListeners(){
   const applyBtns = pendingContainer.querySelectorAll('.applyBtn');
   applyBtns.forEach(btn=>{ btn.removeEventListener('click', onApplyClick); btn.addEventListener('click', onApplyClick); });
@@ -512,41 +385,43 @@ function attachPendingListeners(){
   viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
 }
 
-/* Al aplicar desde la fila: pedimos contraseña si no está validada */
+/* When applying from pending row: prompt for password (if not provided in inline field), validate, then call update */
 async function onApplyClick(e){
   const tr = e.target.closest('tr');
   const serial = tr && tr.dataset.serial;
   const select = tr.querySelector('.actionSelect');
   const action = select && select.value;
   if(!action) return alert('Selecciona una acción');
-  const autorizador = autorizaSelect.value || '';
-  // Si no estamos logueados como supervisor, pedimos contraseña en el momento
-  if(!supervisorLogged){
-    const pass = prompt(`Introduce contraseña supervisor para ${action} en serie ${serial}`);
+  const autorizador = detailAutoriza ? detailAutoriza.value : '';
+  // get password: prefer inline field value, else prompt
+  let pass = superPassInline.value.trim();
+  if(!pass){
+    pass = prompt(`Introduce contraseña supervisor para ${action} en serie ${serial}`);
     if(!pass) return alert('Contraseña requerida para autorizar/rechazar');
-    const ok = await validateSupervisorPass(pass);
-    if(!ok) return alert('Contraseña inválida');
-    supervisorLogged = true;
-    supervisorPassValue = pass;
-    openSupervisorOverlay();
   }
-  if(!confirm(`Confirmar ${action} para serie ${serial} como ${autorizador}?`)) return;
-  setLoading(true,'Actualizando...');
+  setLoading(true,'Validando contraseña...');
   try {
+    const ok = await validateSupervisorPass(pass);
+    if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
+    // password valid: perform update
+    setLoading(true,'Aplicando decisión...');
     const url = new URL(WEBAPP_URL);
     url.searchParams.set('action','update');
     url.searchParams.set('serial', serial);
     url.searchParams.set('newStatus', action);
     url.searchParams.set('autorizador', autorizador);
-    url.searchParams.set('pass', supervisorPassValue);
+    url.searchParams.set('pass', pass);
     const res = await fetch(url.toString());
     if(!res.ok) throw new Error('Error servidor');
     const data = await res.json();
-    if(data && data.ok){ alert('Actualizado'); await btnRefresh.click(); } else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
+    if(data && data.ok){ alert('Actualizado'); // refresh pending list
+      await refreshPendingsWithPass(pass);
+      superPassInline.value = ''; // clear inline pass for security
+    } else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
   } catch(err){ console.error(err); alert('Error al actualizar'); } finally { setLoading(false); }
 }
 
-/* Ver detalles: abre modal split view (A..X + previews) */
+/* View details: open modal split view */
 function onViewDetailsClick(e){
   const serial = e.currentTarget.dataset.serial;
   const context = e.currentTarget.dataset.context || 'supervisor';
@@ -556,9 +431,7 @@ function onViewDetailsClick(e){
   openDetailModal(rec,{context});
 }
 
-/* ============================
-   VALIDAR contraseña supervisor (llama action=pending&pass=... y acepta si devuelve array)
-   ============================ */
+/* Validate supervisor password by calling backend (action=pending&pass=...) and accepting if it returns array */
 async function validateSupervisorPass(pass){
   try {
     const url = new URL(WEBAPP_URL);
@@ -567,22 +440,37 @@ async function validateSupervisorPass(pass){
     const res = await fetch(url.toString());
     if(!res.ok) return false;
     const data = await res.json();
-    // Si backend devuelve array de pendientes, consideramos la pass válida
-    return Array.isArray(data);
-  } catch(e){
-    console.error('Error validando pass',e);
-    return false;
-  }
+    return Array.isArray(data) || (data && !data.error); // accept if array or non-error response
+  } catch(e){ console.error('Error validando pass',e); return false; }
 }
 
-/* ============================
-   DUPLICATE CHECK
-   ============================ */
+/* Refresh pendings using provided pass (if backend requires pass) */
+async function refreshPendingsWithPass(pass){
+  try {
+    setLoading(true,'Refrescando pendientes...');
+    const url = new URL(WEBAPP_URL);
+    url.searchParams.set('action','pending');
+    if(pass) url.searchParams.set('pass', pass);
+    const res = await fetch(url.toString());
+    if(!res.ok) throw new Error('No autorizado');
+    const data = await res.json();
+    pendingRecords = Array.isArray(data) ? data : [];
+    pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
+    renderPendingTable(pendingRecords);
+  } catch(e){ console.error(e); alert('Error al cargar pendientes'); } finally { setLoading(false); }
+}
+
+/* btnRefresh: if inline pass provided, use it; else try without pass */
+btnRefresh.addEventListener('click', async ()=>{
+  const pass = superPassInline.value.trim();
+  await refreshPendingsWithPass(pass || undefined);
+});
+
+/* Duplicate check */
 btnCheckDuplicates.addEventListener('click', async ()=>{
   if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
   setLoading(true,'Verificando duplicados...');
   try {
-    // Intentamos obtener autorizados desde backend (action=authorized) si existe
     let authorizedList = [];
     try {
       const url = new URL(WEBAPP_URL);
@@ -610,12 +498,10 @@ btnCheckDuplicates.addEventListener('click', async ()=>{
   } catch(e){ console.error(e); alert('Error al verificar duplicados'); } finally { setLoading(false); }
 });
 
-/* ============================
-   BATCH ACTIONS (simple)
-   ============================ */
-btnBatchActions.addEventListener('click', ()=>{
-  if(!pendingContainer.querySelector('table.pending-table')) return alert('No hay pendientes');
+/* Batch actions: similar flow, but will ask for password if not provided inline */
+btnBatchActions.addEventListener('click', async ()=>{
   const table = pendingContainer.querySelector('table.pending-table');
+  if(!table) return alert('No hay pendientes');
   const already = table.querySelector('thead th.select-col');
   if(!already){
     const th = document.createElement('th'); th.className='select-col'; th.innerHTML = '<input id="selectAll" type="checkbox" />';
@@ -627,41 +513,39 @@ btnBatchActions.addEventListener('click', ()=>{
     btnBatchActions.textContent='Aplicar acción en seleccionados';
     btnBatchActions.classList.remove('btn','ghost'); btnBatchActions.classList.add('btn');
     btnBatchActions.onclick = async ()=>{
-      if(!supervisorLogged){
-        const pass = prompt('Introduce contraseña supervisor para acciones en lote');
-        if(!pass) return alert('Contraseña requerida');
-        const ok = await validateSupervisorPass(pass);
-        if(!ok) return alert('Contraseña inválida');
-        supervisorLogged=true; supervisorPassValue=pass; openSupervisorOverlay();
-      }
       const selected = Array.from(table.querySelectorAll('.row-select:checked')).map(cb=>cb.dataset.serial);
       if(selected.length===0) return alert('No hay registros seleccionados');
       const action = prompt(`Acción para ${selected.length} registros (AUTORIZADO / RECHAZADO):`);
       if(!action) return;
-      const autorizador = autorizaSelect.value || '';
-      if(!confirm(`Confirmar ${action} para ${selected.length} serie(s) como ${autorizador}?`)) return;
-      setLoading(true,'Aplicando acción en lote...');
+      let pass = superPassInline.value.trim();
+      if(!pass){ pass = prompt('Introduce contraseña supervisor para acciones en lote'); if(!pass) return alert('Contraseña requerida'); }
+      setLoading(true,'Validando contraseña...');
       try {
-        // Intentamos endpoint batch
-        const url = new URL(WEBAPP_URL);
-        url.searchParams.set('action','updateBatch');
-        url.searchParams.set('serials', JSON.stringify(selected));
-        url.searchParams.set('newStatus', action);
-        url.searchParams.set('autorizador', autorizador);
-        url.searchParams.set('pass', supervisorPassValue);
-        const res = await fetch(url.toString());
-        if(res.ok){
-          const data = await res.json();
-          if(data && data.ok){ alert('Lote actualizado'); await btnRefresh.click(); return; }
-        }
-        // fallback secuencial
-        for(const s of selected){ await applySingleUpdate(s, action, autorizador); }
-        alert('Lote actualizado (secuencial)');
-        await btnRefresh.click();
-      } catch(e){ console.error(e); alert('Error al aplicar lote'); } finally { setLoading(false); }
+        const ok = await validateSupervisorPass(pass);
+        if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
+        const autorizador = detailAutoriza.value || '';
+        setLoading(true,'Aplicando acción en lote...');
+        try {
+          const url = new URL(WEBAPP_URL);
+          url.searchParams.set('action','updateBatch');
+          url.searchParams.set('serials', JSON.stringify(selected));
+          url.searchParams.set('newStatus', action);
+          url.searchParams.set('autorizador', autorizador);
+          url.searchParams.set('pass', pass);
+          const res = await fetch(url.toString());
+          if(res.ok){
+            const data = await res.json();
+            if(data && data.ok){ alert('Lote actualizado'); await refreshPendingsWithPass(pass); return; }
+          }
+          // fallback sequential
+          for(const s of selected){ await applySingleUpdate(s, action, autorizador, pass); }
+          alert('Lote actualizado (secuencial)');
+          await refreshPendingsWithPass(pass);
+        } catch(e){ console.error(e); alert('Error al aplicar lote'); } finally { setLoading(false); }
+      } catch(e){ console.error(e); alert('Error validando contraseña'); setLoading(false); }
     };
   } else {
-    // quitar modo selección
+    // remove selection UI
     table.querySelectorAll('thead th.select-col').forEach(th=>th.remove());
     table.querySelectorAll('tbody tr').forEach(tr=>tr.removeChild(tr.children[0]));
     btnBatchActions.textContent='Acciones en lote';
@@ -670,14 +554,14 @@ btnBatchActions.addEventListener('click', ()=>{
   }
 });
 
-async function applySingleUpdate(serial, action, autorizador){
+async function applySingleUpdate(serial, action, autorizador, pass){
   try {
     const url = new URL(WEBAPP_URL);
     url.searchParams.set('action','update');
     url.searchParams.set('serial', serial);
     url.searchParams.set('newStatus', action);
     url.searchParams.set('autorizador', autorizador);
-    url.searchParams.set('pass', supervisorPassValue);
+    url.searchParams.set('pass', pass);
     const res = await fetch(url.toString());
     if(!res.ok) throw new Error('Error servidor');
     const data = await res.json();
@@ -685,9 +569,7 @@ async function applySingleUpdate(serial, action, autorizador){
   } catch(e){ console.error(e); return false; }
 }
 
-/* ============================
-   DETAILS MODAL (A..X + previews D/M/O/X)
-   ============================ */
+/* DETAILS modal: A..X + previews D/M/O/X. Approve/reject from modal will prompt for password if needed */
 function openDetailModal(record, opts={context:'advisor'}){
   const context = opts.context || 'advisor';
   currentDetailRecord = record;
@@ -728,7 +610,8 @@ function openDetailModal(record, opts={context:'advisor'}){
     for(const k of keys){ if(record[k]!==undefined && record[k]!==null) return record[k]; }
     return '';
   }
-  // Left: A..X
+
+  // Left panel: A..X
   let leftHtml = '';
   const quickKeys = ['serial','cliente','usuario','email','telefono','modelo','estatus'];
   quickKeys.forEach(k=>{
@@ -776,12 +659,19 @@ function openDetailModal(record, opts={context:'advisor'}){
 
   renderPreviewArea();
 
-  const actionsEnabled = (context==='supervisor' && supervisorLogged);
-  btnAuthorize.disabled = !actionsEnabled; btnReject.disabled = !actionsEnabled; detailAutoriza.disabled = !actionsEnabled;
-  detailModeHint.textContent = actionsEnabled ? '' : 'Acciones deshabilitadas: al aprobar/rechazar se pedirá contraseña';
-
-  btnAuthorize.onclick = async ()=>{ if(!supervisorLogged){ const pass = prompt('Introduce contraseña supervisor para autorizar'); if(!pass) return alert('Contraseña requerida'); const ok = await validateSupervisorPass(pass); if(!ok) return alert('Contraseña inválida'); supervisorLogged=true; supervisorPassValue=pass; openSupervisorOverlay(); } applyDecision(record.serial,'AUTORIZADO', detailAutoriza.value || autorizaSelect.value); };
-  btnReject.onclick = async ()=>{ if(!supervisorLogged){ const pass = prompt('Introduce contraseña supervisor para rechazar'); if(!pass) return alert('Contraseña requerida'); const ok = await validateSupervisorPass(pass); if(!ok) return alert('Contraseña inválida'); supervisorLogged=true; supervisorPassValue=pass; openSupervisorOverlay(); } applyDecision(record.serial,'RECHAZADO', detailAutoriza.value || autorizaSelect.value); };
+  detailModeHint.textContent = 'Al aprobar/rechazar se solicitará contraseña si no está en el campo de contraseña principal.';
+  btnAuthorize.onclick = async ()=>{ // prompt for pass if inline empty
+    let pass = superPassInline.value.trim();
+    if(!pass){ pass = prompt('Introduce contraseña supervisor para autorizar'); if(!pass) return alert('Contraseña requerida'); }
+    setLoading(true,'Validando contraseña...');
+    try {
+      const ok = await validateSupervisorPass(pass);
+      if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
+      await applyDecision(record.serial,'AUTORIZADO', detailAutoriza.value || '');
+      superPassInline.value = '';
+    } catch(e){ console.error(e); alert('Error validando contraseña'); } finally { setLoading(false); }
+  };
+  btnReject.onclick = async ()=>{ let pass = superPassInline.value.trim(); if(!pass){ pass = prompt('Introduce contraseña supervisor para rechazar'); if(!pass) return alert('Contraseña requerida'); } setLoading(true,'Validando contraseña...'); try { const ok = await validateSupervisorPass(pass); if(!ok){ alert('Contraseña inválida'); setLoading(false); return; } await applyDecision(record.serial,'RECHAZADO', detailAutoriza.value || ''); superPassInline.value = ''; } catch(e){ console.error(e); alert('Error validando contraseña'); } finally { setLoading(false); } };
 
   detailModal.style.display='flex'; detailModal.setAttribute('aria-hidden','false');
 }
@@ -797,26 +687,24 @@ async function applyDecision(serial, action, autorizador){
     url.searchParams.set('serial', serial);
     url.searchParams.set('newStatus', action);
     url.searchParams.set('autorizador', autorizador);
-    url.searchParams.set('pass', supervisorPassValue);
+    // use pass from inline if present, else backend should accept the pass used to validate earlier
+    const pass = superPassInline.value.trim();
+    if(pass) url.searchParams.set('pass', pass);
     const res = await fetch(url.toString());
     if(!res.ok) throw new Error('Error servidor');
     const data = await res.json();
-    if(data && data.ok){ alert('Actualizado'); await btnRefresh.click(); detailModal.style.display='none'; } else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
+    if(data && data.ok){ alert('Actualizado'); await refreshPendingsWithPass(pass || undefined); detailModal.style.display='none'; } else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
   } catch(err){ console.error(err); alert('Error al actualizar'); } finally { setLoading(false); }
 }
 
-/* ============================
-   Helpers: attach result listeners & pdf clicks
-   ============================ */
+/* Helpers: attach result listeners & pdf clicks */
 function attachResultListeners(){ const viewBtns = resultArea.querySelectorAll('.view-details'); viewBtns.forEach(b=>{ b.removeEventListener('click', onResultViewDetails); b.addEventListener('click', onResultViewDetails); }); }
 function onResultViewDetails(e){ const serial = e.currentTarget.dataset.serial; const rec = recordMap.get(serial); if(!rec) return alert('Registro no disponible'); openDetailModal(rec,{context:'advisor'}); }
 function attachPdfClicks(){ document.querySelectorAll('.pdf-preview').forEach(el=>{ const clone = el.cloneNode(true); el.parentNode.replaceChild(clone,el); }); document.querySelectorAll('.pdf-preview').forEach(el=>{ el.addEventListener('click', ()=>{ const url = el.dataset.url; if(url) window.open(url,'_blank'); }); }); }
 function renderEstatusBadge(text){ const t=(text||'').toString().toUpperCase(); const cls = t==='AUTORIZADO'?'autorizado':(t==='RECHAZADO'?'rechazado':'pendiente'); return `<span class="estatus ${cls}">${escapeHtml(t||'—')}</span>`; }
 function pdfCell(url){ if(!url) return '<div style="color:var(--brand-gray)">Sin PDF</div>'; const preview = transformToPreviewUrl(url); return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div class="pdf-preview" data-url="${escapeAttr(url)}"><iframe src="${escapeAttr(preview)}"></iframe></div><a href="${escapeAttr(url)}" target="_blank" rel="noopener">Abrir</a></div>`; }
 
-/* ============================
-   Small trace lines from original doc (para trazabilidad)
-   ============================ */
+/* Small trace lines from original doc */
 console.log('Referencia documento: "BD Extension de garantias — Panel" / "Búsqueda por número de serie".');
 </script>
 </body>
