@@ -6,10 +6,10 @@
 <title>BD Extensión de garantías — Panel</title>
 <style>
 :root{
---brand-white:#FFFFFF;--brand-black:#231F20;--brand-gray:#616160;--brand-accent:#F28F17;
---bg-soft:linear-gradient(180deg,#fbfdff,#f7f9fb);--card-bg:#FFFFFF;--radius:12px;
---shadow-soft:0 10px 30px rgba(35,31,32,0.06);--glass:rgba(255,255,255,0.6);
-font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --brand-white:#FFFFFF;--brand-black:#231F20;--brand-gray:#616160;--brand-accent:#F28F17;
+  --bg-soft:linear-gradient(180deg,#fbfdff,#f7f9fb);--card-bg:#FFFFFF;--radius:12px;
+  --shadow-soft:0 10px 30px rgba(35,31,32,0.06);--glass:rgba(255,255,255,0.6);
+  font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg-soft);color:var(--brand-black);-webkit-font-smoothing:antialiased}
@@ -103,7 +103,6 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       <div id="resultArea" class="result-area" role="region" aria-label="Resultados de búsqueda"></div>
     </div>
 
-    <!-- Pendientes integrados en la vista principal (se mantienen, pero el supervisor usa su propio panel) -->
     <div class="pending-section" id="pendingSection">
       <div class="pending-header">
         <div>
@@ -220,7 +219,6 @@ const COL_INDEX = {
 let pendingRecords = [];
 const recordMap = new Map();
 let currentDetailRecord = null;
-let previewSelection = {3:true,12:true,14:true,23:true};
 
 /* DOM */
 const serialInput = document.getElementById('serial');
@@ -253,7 +251,6 @@ const detailPdfFrame = document.getElementById('detailPdfFrame');
 const btnAuthorize = document.getElementById('btnAuthorize');
 const btnReject = document.getElementById('btnReject');
 const detailAutoriza = document.getElementById('detailAutoriza');
-const detailModeHint = document.getElementById('detailModeHint');
 
 /* Utilities */
 function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -266,33 +263,7 @@ function setLoading(state,message){ const loading=!!state; btnSearch.disabled=lo
 /* Startup: load pendientes (without password) for main view */
 window.addEventListener('load', async ()=>{
   serialInput.focus();
-  try {
-    setLoading(true,'Cargando pendientes...');
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    const res = await fetch(url.toString());
-    if(res.ok){
-      const data = await res.json();
-      if(Array.isArray(data) && data.length>0){
-        pendingRecords = data;
-        pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
-        renderPendingTable(pendingRecords);
-        pendingMeta.textContent = `Pendientes: ${pendingRecords.length}`;
-      } else {
-        pendingContainer.innerHTML = '<div class="empty">No hay pendientes visibles. Si tu backend requiere contraseña, introduce la contraseña al aprobar/rechazar.</div>';
-        pendingMeta.textContent = 'Pendientes: 0';
-      }
-    } else {
-      pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
-      pendingMeta.textContent = 'Pendientes: —';
-    }
-  } catch(e){
-    console.warn('No se pudieron cargar pendientes automáticamente',e);
-    pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
-    pendingMeta.textContent = 'Pendientes: —';
-  } finally {
-    setLoading(false);
-  }
+  await loadPendingsNoPass();
 });
 
 /* SEARCH (main). */
@@ -429,16 +400,14 @@ function attachPendingListeners(){
   viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
 }
 
-/* When applying from pending row: use supervisorSelect value as autorizador */
+/* When applying from pending row: use supervisorSelect value as autorizador if modal open */
 async function onApplyClick(e){
   const tr = e.target.closest('tr');
   const serial = tr && tr.dataset.serial;
   const select = tr.querySelector('.actionSelect');
   const action = select && select.value;
   if(!action) return alert('Selecciona una acción');
-  // get autorizador from supervisorSelect (if open) else from detailAutoriza
-  const autorizador = supervisorSelect ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
-  // get password: prefer inline field value, else prompt
+  const autorizador = (supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block') ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
   let pass = superPassInline.value.trim();
   if(!pass){
     pass = prompt(`Introduce contraseña supervisor para ${action} en serie ${serial}`);
@@ -499,7 +468,6 @@ async function refreshPendingsWithPass(pass){
     pendingRecords = Array.isArray(data) ? data : [];
     pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
     renderPendingTable(pendingRecords);
-    // Also render inside supervisor panel if open
     if(supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block'){
       renderSupervisorPending(pendingRecords);
     }
@@ -512,29 +480,20 @@ btnRefresh.addEventListener('click', async ()=>{
   await refreshPendingsWithPass(pass || undefined);
 });
 
-/* Duplicate check (main): now checks duplicates against ANY estatus in recordMap and authorizedList */
+/* Duplicate check (main): checks duplicates against ANY estatus in recordMap and pendingRecords */
 btnCheckDuplicates.addEventListener('click', async ()=>{
   if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
   setLoading(true,'Verificando duplicados...');
   try {
-    // Try to fetch authorized list from backend (if available)
-    let authorizedList = [];
-    try {
-      const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','authorized');
-      const res = await fetch(url.toString());
-      if(res.ok){ const data = await res.json(); if(Array.isArray(data)) authorizedList = data; }
-    } catch(e){}
-    const existingSet = new Set();
-    // Add all serials from authorizedList
-    if(authorizedList.length>0){ authorizedList.forEach(r=>{ if(r && r.serial) existingSet.add(String(r.serial)); }); }
-    // Add all serials from recordMap (this includes any estatus)
-    for(const [k,v] of recordMap.entries()){ if(k) existingSet.add(String(k)); }
-    const duplicates = pendingRecords.filter(r=>existingSet.has(String(r.serial)));
+    // Build counts from recordMap and pendingRecords
+    const counts = {};
+    for(const [k,v] of recordMap.entries()){ if(k) counts[String(k)] = (counts[String(k)]||0) + 1; }
+    pendingRecords.forEach(p=>{ if(p && p.serial) counts[String(p.serial)] = (counts[String(p.serial)]||0) + 1; });
+    const duplicates = Object.keys(counts).filter(k=>counts[k] > 1);
     if(duplicates.length===0) alert('No se detectaron duplicados en los pendientes.');
     else {
       duplicates.forEach(d=>{
-        const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d.serial))}"]`);
+        const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d))}"]`);
         if(tr) tr.classList.add('duplicate-row');
       });
       alert(`Se detectaron ${duplicates.length} registro(s) duplicados. Filas resaltadas.`);
@@ -561,8 +520,7 @@ btnBatchActions.addEventListener('click', async ()=>{
       if(selected.length===0) return alert('No hay registros seleccionados');
       const action = prompt(`Acción para ${selected.length} registros (AUTORIZADO / RECHAZADO):`);
       if(!action) return;
-      // get autorizador: prefer supervisorSelect if panel open, else detailAutoriza
-      const autorizador = supervisorSelect && (supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block') ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
+      const autorizador = (supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block') ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
       let pass = superPassInline.value.trim();
       if(!pass){
         pass = prompt(`Introduce contraseña supervisor para acción en lote (${action})`);
@@ -573,7 +531,6 @@ btnBatchActions.addEventListener('click', async ()=>{
         const ok = await validateSupervisorPass(pass);
         if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
         setLoading(true,'Aplicando decisiones en lote...');
-        // Call update for each selected serial (could be optimized server-side)
         for(const s of selected){
           try {
             const url = new URL(WEBAPP_URL);
@@ -595,11 +552,8 @@ btnBatchActions.addEventListener('click', async ()=>{
 
 /* Supervisor panel: open/close and render pendings inside it */
 openSupervisor.addEventListener('click', async ()=>{
-  // Open modal and render pendings; allow selecting autorizador at start
   supervisorModal.style.display = 'flex';
-  // Ensure supervisorSelect value is propagated to detailAutoriza
   detailAutoriza.value = supervisorSelect.value;
-  // Render pendings inside supervisor panel
   renderSupervisorPending(pendingRecords);
 });
 supervisorClose.addEventListener('click', ()=>{ supervisorModal.style.display = 'none'; });
@@ -637,7 +591,6 @@ function renderSupervisorPending(list){
     </tr>`;
   }).join('');
   superPendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes Supervisor"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  // Attach listeners for supervisor panel rows
   const applyBtns = superPendingContainer.querySelectorAll('.applyBtn');
   applyBtns.forEach(btn=>{ btn.removeEventListener('click', onApplyClick); btn.addEventListener('click', onApplyClick); });
   const viewBtns = superPendingContainer.querySelectorAll('.view-details');
@@ -652,35 +605,17 @@ superSearchBtn.addEventListener('click', ()=>{
   renderSupervisorPending(filtered);
 });
 
-/* Supervisor duplicate check across any estatus (uses recordMap + pendingRecords + optional authorized endpoint) */
+/* Supervisor duplicate check across any estatus */
 superCheckDuplicates.addEventListener('click', async ()=>{
   if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
   setLoading(true,'Verificando duplicados (todos estatus)...');
   try {
-    let externalList = [];
-    try {
-      const url = new URL(WEBAPP_URL);
-      url.searchParams.set('action','authorized');
-      const res = await fetch(url.toString());
-      if(res.ok){ const data = await res.json(); if(Array.isArray(data)) externalList = data; }
-    } catch(e){}
-    const existingSet = new Set();
-    if(externalList.length>0){ externalList.forEach(r=>{ if(r && r.serial) existingSet.add(String(r.serial)); }); }
-    for(const [k,v] of recordMap.entries()){ if(k) existingSet.add(String(k)); }
-    // Also include any serials present in pendingRecords (to detect duplicates within pendings)
-    pendingRecords.forEach(p=>{ if(p && p.serial) existingSet.add(String(p.serial)); });
-    // Now find duplicates by checking if any serial appears more than once across sources
     const counts = {};
-    // Count in recordMap
-    for(const [k,v] of recordMap.entries()){ if(k){ counts[String(k)] = (counts[String(k)]||0) + 1; } }
-    // Count in externalList
-    externalList.forEach(r=>{ if(r && r.serial) counts[String(r.serial)] = (counts[String(r.serial)]||0) + 1; });
-    // Count in pendingRecords
+    for(const [k,v] of recordMap.entries()){ if(k) counts[String(k)] = (counts[String(k)]||0) + 1; }
     pendingRecords.forEach(p=>{ if(p && p.serial) counts[String(p.serial)] = (counts[String(p.serial)]||0) + 1; });
     const duplicates = Object.keys(counts).filter(k=>counts[k] > 1);
     if(duplicates.length === 0) alert('No se detectaron duplicados en los pendientes ni en registros existentes.');
     else {
-      // Highlight rows in both main pending container and supervisor pending container
       duplicates.forEach(s=>{
         const trMain = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(s))}"]`);
         if(trMain) trMain.classList.add('duplicate-row');
@@ -695,17 +630,14 @@ superCheckDuplicates.addEventListener('click', async ()=>{
 /* Detail modal open */
 function openDetailModal(rec, opts){
   currentDetailRecord = rec;
-  // populate left fields
   splitLeft.innerHTML = '';
   Object.keys(rec).forEach(k=>{
     const div = document.createElement('div'); div.className='field';
     div.innerHTML = `<strong>${escapeHtml(k)}</strong><span>${escapeHtml(String(rec[k]||''))}</span>`;
     splitLeft.appendChild(div);
   });
-  // set pdf preview if available
   const pdfUrl = rec.pdfUrl || rec[COL_INDEX.pdf] || '';
   detailPdfFrame.src = transformToPreviewUrl(pdfUrl || '');
-  // set autoriza select to supervisor selection if available
   detailAutoriza.value = supervisorSelect ? supervisorSelect.value : (rec.autorizadoPor || 'CESAR');
   detailModal.style.display = 'flex';
 }
@@ -734,12 +666,13 @@ function attachResultListeners(){
   viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
 }
 
-/* Attach PDF clicks (if any special handling needed) */
-function attachPdfClicks(){ /* placeholder if needed */ }
+/* Attach PDF clicks (placeholder) */
+function attachPdfClicks(){}
 
 /* Utility: refresh pendingRecords from server (no pass) */
 async function loadPendingsNoPass(){
   try {
+    setLoading(true,'Cargando pendientes...');
     const url = new URL(WEBAPP_URL);
     url.searchParams.set('action','pending');
     const res = await fetch(url.toString());
@@ -748,13 +681,13 @@ async function loadPendingsNoPass(){
       pendingRecords = Array.isArray(data) ? data : [];
       pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
       renderPendingTable(pendingRecords);
+    } else {
+      pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
+      pendingMeta.textContent = 'Pendientes: —';
     }
-  } catch(e){ console.warn('No se pudieron cargar pendientes',e); }
+  } catch(e){ console.warn('No se pudieron cargar pendientes automáticamente',e); pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>'; pendingMeta.textContent = 'Pendientes: —'; }
+  finally { setLoading(false); }
 }
-
-/* Optional: initial load for supervisor panel content */
-loadPendingsNoPass();
-
 </script>
 </body>
 </html>
