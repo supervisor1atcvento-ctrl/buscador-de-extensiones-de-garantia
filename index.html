@@ -6,10 +6,10 @@
 <title>BD Extensión de garantías — Panel</title>
 <style>
 :root{
-  --brand-white:#FFFFFF;--brand-black:#231F20;--brand-gray:#616160;--brand-accent:#F28F17;
-  --bg-soft:linear-gradient(180deg,#fbfdff,#f7f9fb);--card-bg:#FFFFFF;--radius:12px;
-  --shadow-soft:0 10px 30px rgba(35,31,32,0.06);--glass:rgba(255,255,255,0.6);
-  font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+--brand-white:#FFFFFF;--brand-black:#231F20;--brand-gray:#616160;--brand-accent:#F28F17;
+--bg-soft:linear-gradient(180deg,#fbfdff,#f7f9fb);--card-bg:#FFFFFF;--radius:12px;
+--shadow-soft:0 10px 30px rgba(35,31,32,0.06);--glass:rgba(255,255,255,0.6);
+font-family:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg-soft);color:var(--brand-black);-webkit-font-smoothing:antialiased}
@@ -103,6 +103,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       <div id="resultArea" class="result-area" role="region" aria-label="Resultados de búsqueda"></div>
     </div>
 
+    <!-- Pendientes integrados en la vista principal (se mantienen, pero el supervisor usa su propio panel) -->
     <div class="pending-section" id="pendingSection">
       <div class="pending-header">
         <div>
@@ -118,6 +119,7 @@ table.results tbody td{padding:10px 12px;border-bottom:1px solid rgba(35,31,32,0
       </div>
       <div id="pendingContainer"></div>
     </div>
+
   </div>
 </div>
 
@@ -218,7 +220,9 @@ const COL_INDEX = {
 /* State */
 let pendingRecords = [];
 const recordMap = new Map();
+let supervisorPassValue = ''; // only stored temporarily when validated for actions
 let currentDetailRecord = null;
+let previewSelection = {3:true,12:true,14:true,23:true};
 
 /* DOM */
 const serialInput = document.getElementById('serial');
@@ -231,19 +235,9 @@ const superPassInline = document.getElementById('superPassInline');
 const btnRefresh = document.getElementById('btnRefresh');
 const pendingContainer = document.getElementById('pendingContainer');
 const pendingMeta = document.getElementById('pendingMeta');
+const superSearch = document.getElementById('superSearch'); // not used but kept for compatibility
 const btnCheckDuplicates = document.getElementById('btnCheckDuplicates');
 const btnBatchActions = document.getElementById('btnBatchActions');
-
-const openSupervisor = document.getElementById('openSupervisor');
-const supervisorModal = document.getElementById('supervisorModal');
-const supervisorSelect = document.getElementById('supervisorSelect');
-const supervisorClose = document.getElementById('supervisorClose');
-const supervisorRefresh = document.getElementById('supervisorRefresh');
-const superPendingContainer = document.getElementById('superPendingContainer');
-const superSearchSerial = document.getElementById('superSearchSerial');
-const superSearchBtn = document.getElementById('superSearchBtn');
-const superCheckDuplicates = document.getElementById('superCheckDuplicates');
-
 const detailModal = document.getElementById('detailModal');
 const detailClose = document.getElementById('detailClose');
 const splitLeft = document.getElementById('splitLeft');
@@ -251,443 +245,316 @@ const detailPdfFrame = document.getElementById('detailPdfFrame');
 const btnAuthorize = document.getElementById('btnAuthorize');
 const btnReject = document.getElementById('btnReject');
 const detailAutoriza = document.getElementById('detailAutoriza');
+const detailModeHint = document.getElementById('detailModeHint');
+const chkD = document.getElementById('chkD');
+const chkM = document.getElementById('chkM');
+const chkO = document.getElementById('chkO');
+const chkX = document.getElementById('chkX');
+const previewTabsContainer = document.getElementById('previewTabsContainer');
 
 /* Utilities */
 function escapeHtml(s){ if(s===null||s===undefined) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
 function isLikelyDate(v){ if(!v) return false; if(typeof v==='string' && (/^\d{4}-\d{2}-\d{2}T/.test(v) || /^\d{1,2}\\/\d{1,2}\\/\d{2,4}/.test(v) || v.startsWith('Date('))) return true; if(typeof v==='number') return true; return false; }
 function formatDate(raw){ if(!raw) return ''; if(typeof raw==='string' && raw.startsWith('Date(')){ const nums = raw.replace(/^Date\\(|\\)$/g,'').split(',').map(s=>s.trim()); const y=Number(nums[0]||0), m=Number(nums[1]||0), d=Number(nums[2]||1), hh=Number(nums[3]||0), mm=Number(nums[4]||0); return new Date(y,m,d,hh,mm).toLocaleString(); } if(typeof raw==='string' && /^\d{4}-\d{2}-\d{2}T/.test(raw)) return new Date(raw).toLocaleString(); if(typeof raw==='string' && /^\d{1,2}\\/\d{1,2}\\/\d{2,4}/.test(raw)) return raw; if(typeof raw==='number'){ try{return new Date(raw).toLocaleString()}catch(e){} } return String(raw); }
-function transformToPreviewUrl(raw){ try{ const u=new URL(raw); if(u.hostname.includes('drive.google.com')){ const m=raw.match(/\\/file\\/d\\/([^\\/]+)\\/?/); if(m&&m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`; const id=u.searchParams.get('id'); if(id) return `https://drive.google.com/file/d/${id}/preview`; } if(raw.toLowerCase().endsWith('.pdf')) return raw; return raw; }catch(e){ return raw; } }
-function setLoading(state,message){ const loading=!!state; btnSearch.disabled=loading; btnRefresh.disabled=loading; btnCheckDuplicates.disabled=loading; btnBatchActions.disabled=loading; openSupervisor.disabled=loading; if(state) status.textContent = message || 'Cargando...'; else status.textContent=''; }
+function transformToPreviewUrl(raw){ try{ const u=new URL(raw); if(u.hostname.includes('drive.google.com')){ const m=raw.match(/\/file\/d\/([^\/]+)\/?/); if(m&&m[1]) return `https://drive.google.com/file/d/${m[1]}/preview`; const id=u.searchParams.get('id'); if(id) return `https://drive.google.com/file/d/${id}/preview`; } if(raw.toLowerCase().endsWith('.pdf')) return raw; return raw; }catch(e){ return raw; } }
+function setLoading(state,message){ const loading=!!state; btnSearch.disabled=loading; btnRefresh.disabled=loading; btnCheckDuplicates.disabled=loading; btnBatchActions.disabled=loading; if(state) status.textContent = message || 'Cargando...'; else status.textContent=''; }
 
-/* Startup: load pendientes (without password) for main view */
+/* Startup: try to load pendientes (without password). If backend requires pass, show message and let user approve/reject by entering pass when needed. */
 window.addEventListener('load', async ()=>{
-  serialInput.focus();
-  await loadPendingsNoPass();
+serialInput.focus();
+try {
+setLoading(true,'Cargando pendientes...');
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','pending');
+const res = await fetch(url.toString());
+if(res.ok){
+const data = await res.json();
+if(Array.isArray(data) && data.length>0){
+pendingRecords = data;
+pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
+renderPendingTable(pendingRecords);
+pendingMeta.textContent = `Pendientes: ${pendingRecords.length}`;
+} else {
+pendingContainer.innerHTML = '<div class="empty">No hay pendientes visibles. Si tu backend requiere contraseña, introduce la contraseña al aprobar/rechazar.</div>';
+pendingMeta.textContent = 'Pendientes: 0';
+}
+} else {
+pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
+pendingMeta.textContent = 'Pendientes: —';
+}
+} catch(e){
+console.warn('No se pudieron cargar pendientes automáticamente',e);
+pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
+pendingMeta.textContent = 'Pendientes: —';
+} finally {
+setLoading(false);
+}
 });
 
-/* SEARCH (main). */
+/* SEARCH (main). When searching, show search results; also include any matching pending records so user sees both contexts. */
 btnSearch.addEventListener('click', searchSerial);
 serialInput.addEventListener('keydown', e=>{ if(e.key==='Enter') searchSerial(); });
 btnClear.addEventListener('click', ()=>{ serialInput.value=''; resultArea.innerHTML=''; status.textContent=''; });
 
 async function searchSerial(){
-  const serial = serialInput.value.trim();
-  if(!serial){ status.textContent='Introduce un número de serie.'; return; }
-  setLoading(true,'Buscando...');
-  resultArea.innerHTML='';
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','search');
-    url.searchParams.set('serial', serial);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('Error servidor');
-    const data = await res.json();
-    const list = Array.isArray(data) ? data : [];
-    // Add pending matches not present in search results
-    const serialsInSearch = new Set(list.map(r=>String(r.serial)));
-    pendingRecords.forEach(p=>{
-      if(p && p.serial && !serialsInSearch.has(String(p.serial)) && String(p.serial).toLowerCase().includes(serial.toLowerCase())){
-        list.push(p);
-      }
-      if(p && p.serial) recordMap.set(String(p.serial), p);
-    });
-    if(list.length>0){
-      renderSearchResults(list);
-      status.textContent = `${list.length} resultado(s)`;
-    } else {
-      resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
-      status.textContent = 'No encontrado';
-    }
-  } catch(err){
-    console.error(err);
-    status.textContent = 'Error al buscar';
-  } finally {
-    setLoading(false);
-  }
+const serial = serialInput.value.trim();
+if(!serial){ status.textContent='Introduce un número de serie.'; return; }
+setLoading(true,'Buscando...');
+resultArea.innerHTML='';
+try {
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','search');
+url.searchParams.set('serial', serial);
+const res = await fetch(url.toString());
+if(!res.ok) throw new Error('Error servidor');
+const data = await res.json();
+const list = Array.isArray(data) ? data : [];
+// Add pending matches not present in search results
+const serialsInSearch = new Set(list.map(r=>String(r.serial)));
+pendingRecords.forEach(p=>{
+if(p && p.serial && !serialsInSearch.has(String(p.serial)) && String(p.serial).toLowerCase().includes(serial.toLowerCase())){
+list.push(p);
+}
+if(p && p.serial) recordMap.set(String(p.serial), p);
+});
+if(list.length>0){
+renderSearchResults(list);
+status.textContent = `${list.length} resultado(s)`;
+} else {
+resultArea.innerHTML = '<div class="empty">Sin resultados</div>';
+status.textContent = 'No encontrado';
+}
+} catch(err){
+console.error(err);
+status.textContent = 'Error al buscar';
+} finally {
+setLoading(false);
+}
 }
 
 function renderSearchResults(list){
-  const rows = list.map(r=>{
-    const pdfHtml = pdfCell(r.pdfUrl || r[COL_INDEX.pdf] || '');
-    return `<tr data-serial="${escapeAttr(String(r.serial||''))}">
-      <td class="serial">${escapeHtml(r.serial||'')}</td>
-      <td class="cliente">${escapeHtml(r.cliente||r[COL_INDEX.cliente]||'')}</td>
-      <td class="fecha">${escapeHtml(isLikelyDate(r.fecha)?formatDate(r.fecha):(r[COL_INDEX.fecha]||''))}</td>
-      <td>${renderEstatusBadge(r.estatus||r[COL_INDEX.estatus])}</td>
-      <td class="small">${escapeHtml(r.usuario||'')}</td>
-      <td class="small">${escapeHtml(r.modelo||'')}</td>
-      <td class="small">${escapeHtml(r.email||r[COL_INDEX.emailRemitente]||'')}</td>
-      <td class="small">${escapeHtml(r.telefono||r[COL_INDEX.telefonoCliente]||'')}</td>
-      <td class="pdf-cell">${pdfHtml}</td>
-      <td class="actions-cell"><button class="btn ghost view-details" data-serial="${escapeAttr(String(r.serial||''))}" data-context="advisor">Ver detalles</button></td>
-    </tr>`;
-  }).join('');
-  resultArea.innerHTML = `<div style="overflow:auto"><table class="results" role="table" aria-label="Resultados"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Detalles</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  attachResultListeners();
-  attachPdfClicks();
+const rows = list.map(r=>{
+const pdfHtml = pdfCell(r.pdfUrl || r[COL_INDEX.pdf] || '');
+return `<tr data-serial="${escapeAttr(String(r.serial||''))}">
+<td class="serial">${escapeHtml(r.serial||'')}</td>
+<td class="cliente">${escapeHtml(r.cliente||r[COL_INDEX.cliente]||'')}</td>
+<td class="fecha">${escapeHtml(isLikelyDate(r.fecha)?formatDate(r.fecha):(r[COL_INDEX.fecha]||''))}</td>
+<td>${renderEstatusBadge(r.estatus||r[COL_INDEX.estatus])}</td>
+<td class="small">${escapeHtml(r.usuario||'')}</td>
+<td class="small">${escapeHtml(r.modelo||'')}</td>
+<td class="small">${escapeHtml(r.email||r[COL_INDEX.emailRemitente]||'')}</td>
+<td class="small">${escapeHtml(r.telefono||r[COL_INDEX.telefonoCliente]||'')}</td>
+<td class="pdf-cell">${pdfHtml}</td>
+<td class="actions-cell"><button class="btn ghost view-details" data-serial="${escapeAttr(String(r.serial||''))}" data-context="advisor">Ver detalles</button></td>
+</tr>`;
+}).join('');
+resultArea.innerHTML = `<div style="overflow:auto"><table class="results" role="table" aria-label="Resultados"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Usuario</th><th>Modelo</th><th>Email</th><th>Tel</th><th>PDF</th><th>Detalles</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+attachResultListeners();
+attachPdfClicks();
 }
 
 /* Copy first visible row from memory */
 copyRow.addEventListener('click', async ()=>{
-  const table = resultArea.querySelector('table.results');
-  if(!table){ alert('No hay resultados para copiar'); return; }
-  const firstTr = table.querySelector('tbody tr');
-  if(!firstTr){ alert('No hay resultados para copiar'); return; }
-  const serial = firstTr.dataset.serial;
-  if(!serial){ alert('No hay serial disponible'); return; }
-  const rec = recordMap.get(serial);
-  if(!rec){ alert('Registro no disponible en memoria'); return; }
-  const keys = ['serial','cliente','fecha','estatus','usuario','modelo','email','telefono','pdfUrl'];
-  const values = keys.map(k => {
-    const v = rec[k] !== undefined ? rec[k] : (rec[COL_INDEX[k]] !== undefined ? rec[COL_INDEX[k]] : '');
-    return String(v===null||v===undefined?'':v);
-  });
-  const text = values.join('\t');
-  try{ await navigator.clipboard.writeText(text); alert('Fila (JSON) copiada al portapapeles'); }catch(e){ console.error(e); alert('No se pudo copiar al portapapeles'); }
+const table = resultArea.querySelector('table.results');
+if(!table){ alert('No hay resultados para copiar'); return; }
+const firstTr = table.querySelector('tbody tr');
+if(!firstTr){ alert('No hay resultados para copiar'); return; }
+const serial = firstTr.dataset.serial;
+if(!serial){ alert('No hay serial disponible'); return; }
+const rec = recordMap.get(serial);
+if(!rec){ alert('Registro no disponible en memoria'); return; }
+const keys = ['serial','cliente','fecha','estatus','usuario','modelo','email','telefono','pdfUrl'];
+const values = keys.map(k => {
+const v = rec[k] !== undefined ? rec[k] : (rec[COL_INDEX[k]] !== undefined ? rec[COL_INDEX[k]] : '');
+return String(v===null||v===undefined?'':v);
+});
+const text = values.join('\t');
+try{ await navigator.clipboard.writeText(text); alert('Fila (JSON) copiada al portapapeles'); }catch(e){ console.error(e); alert('No se pudo copiar al portapapeles'); }
 });
 
-/* Render pending table (main view) */
+/* Render pending table (integrated in main) */
 function renderPendingTable(list){
-  if(!Array.isArray(list) || list.length===0){ pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>'; pendingMeta.textContent='Pendientes: 0'; return; }
-  const rows = list.map(item=>{
-    const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
-    const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
-    const has = idx => { const v = getFieldByIndexForRender(item, idx); return v && String(v).trim() !== ''; };
-    const evidenceBadges = [ has(3)?'<span class="small" style="color:green">D</span>':'<span class="small" style="color:#ef4444">D✕</span>',
-      has(12)?'<span class="small" style="color:green">M</span>':'<span class="small" style="color:#ef4444">M✕</span>',
-      has(14)?'<span class="small" style="color:green">O</span>':'<span class="small" style="color:#ef4444">O✕</span>',
-      has(23)?'<span class="small" style="color:green">X</span>':'<span class="small" style="color:#ef4444">X✕</span>' ].join(' ');
-    return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
-      <td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
-      <td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
-      <td>${escapeHtml(isLikelyDate(item.fecha)?formatDate(item.fecha):(item[COL_INDEX.fecha]||''))}</td>
-      <td>${renderEstatusBadge(item.estatus||item[COL_INDEX.estatus])}</td>
-      <td>${escapeHtml(item.modelo||'')}</td>
-      <td>${evidenceBadges}</td>
-      <td>${pdfCellSimple}</td>
-      <td>
-        <select class="actionSelect">
-          <option value="">-- Acción --</option>
-          <option value="AUTORIZADO">AUTORIZADO</option>
-          <option value="RECHAZADO">RECHAZADO</option>
-        </select>
-        <button class="applyBtn btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Aplicar</button>
-        <button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" data-context="supervisor" style="margin-left:6px">Ver detalles</button>
-      </td>
-    </tr>`;
-  }).join('');
-  pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  pendingMeta.textContent = `Pendientes: ${list.length}`;
-  attachPendingListeners();
+if(!Array.isArray(list) || list.length===0){ pendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>'; pendingMeta.textContent='Pendientes: 0'; return; }
+const rows = list.map(item=>{
+const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
+const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
+const has = idx => { const v = getFieldByIndexForRender(item, idx); return v && String(v).trim() !== ''; };
+const evidenceBadges = [ has(3)?'<span class="small" style="color:green">D</span>':'<span class="small" style="color:#ef4444">D✕</span>',
+has(12)?'<span class="small" style="color:green">M</span>':'<span class="small" style="color:#ef4444">M✕</span>',
+has(14)?'<span class="small" style="color:green">O</span>':'<span class="small" style="color:#ef4444">O✕</span>',
+has(23)?'<span class="small" style="color:green">X</span>':'<span class="small" style="color:#ef4444">X✕</span>' ].join(' ');
+return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
+<td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
+<td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
+<td>${escapeHtml(isLikelyDate(item.fecha)?formatDate(item.fecha):(item[COL_INDEX.fecha]||''))}</td>
+<td>${renderEstatusBadge(item.estatus||item[COL_INDEX.estatus])}</td>
+<td>${escapeHtml(item.modelo||'')}</td>
+<td>${evidenceBadges}</td>
+<td>${pdfCellSimple}</td>
+<td>
+<select class="actionSelect">
+<option value="">-- Acción --</option>
+<option value="AUTORIZADO">AUTORIZADO</option>
+<option value="RECHAZADO">RECHAZADO</option>
+</select>
+<button class="applyBtn btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Aplicar</button>
+<button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" data-context="supervisor" style="margin-left:6px">Ver detalles</button>
+</td>
+</tr>`;
+}).join('');
+pendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+pendingMeta.textContent = `Pendientes: ${list.length}`;
+attachPendingListeners();
 }
 
 /* Helper to extract field by index */
 function getFieldByIndexForRender(record, idx){
-  const keyByIndex = Object.keys(COL_INDEX).find(k=>COL_INDEX[k]===idx);
-  if(keyByIndex && record[keyByIndex]) return record[keyByIndex];
-  const letter = String.fromCharCode(65+idx);
-  if(record[letter]) return record[letter];
-  if(record[idx]) return record[idx];
-  return '';
+const keyByIndex = Object.keys(COL_INDEX).find(k=>COL_INDEX[k]===idx);
+if(keyByIndex && record[keyByIndex]) return record[keyByIndex];
+const letter = String.fromCharCode(65+idx);
+if(record[letter]) return record[letter];
+if(record[idx]) return record[idx];
+return '';
 }
 
 /* Attach listeners for pending actions */
 function attachPendingListeners(){
-  const applyBtns = pendingContainer.querySelectorAll('.applyBtn');
-  applyBtns.forEach(btn=>{ btn.removeEventListener('click', onApplyClick); btn.addEventListener('click', onApplyClick); });
-  const viewBtns = pendingContainer.querySelectorAll('.view-details');
-  viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
+const applyBtns = pendingContainer.querySelectorAll('.applyBtn');
+applyBtns.forEach(btn=>{ btn.removeEventListener('click', onApplyClick); btn.addEventListener('click', onApplyClick); });
+const viewBtns = pendingContainer.querySelectorAll('.view-details');
+viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
 }
 
-/* When applying from pending row: use supervisorSelect value as autorizador if modal open */
+/* When applying from pending row: prompt for password (if not provided in inline field), validate, then call update */
 async function onApplyClick(e){
-  const tr = e.target.closest('tr');
-  const serial = tr && tr.dataset.serial;
-  const select = tr.querySelector('.actionSelect');
-  const action = select && select.value;
-  if(!action) return alert('Selecciona una acción');
-  const autorizador = (supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block') ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
-  let pass = superPassInline.value.trim();
-  if(!pass){
-    pass = prompt(`Introduce contraseña supervisor para ${action} en serie ${serial}`);
-    if(!pass) return alert('Contraseña requerida para autorizar/rechazar');
-  }
-  setLoading(true,'Validando contraseña...');
-  try {
-    const ok = await validateSupervisorPass(pass);
-    if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
-    setLoading(true,'Aplicando decisión...');
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','update');
-    url.searchParams.set('serial', serial);
-    url.searchParams.set('newStatus', action);
-    url.searchParams.set('autorizador', autorizador);
-    url.searchParams.set('pass', pass);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('Error servidor');
-    const data = await res.json();
-    if(data && data.ok){ alert('Actualizado'); await refreshPendingsWithPass(pass); superPassInline.value = ''; }
-    else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
-  } catch(err){ console.error(err); alert('Error al actualizar'); } finally { setLoading(false); }
+const tr = e.target.closest('tr');
+const serial = tr && tr.dataset.serial;
+const select = tr.querySelector('.actionSelect');
+const action = select && select.value;
+if(!action) return alert('Selecciona una acción');
+const autorizador = detailAutoriza ? detailAutoriza.value : '';
+// get password: prefer inline field value, else prompt
+let pass = superPassInline.value.trim();
+if(!pass){
+pass = prompt(`Introduce contraseña supervisor para ${action} en serie ${serial}`);
+if(!pass) return alert('Contraseña requerida para autorizar/rechazar');
+}
+setLoading(true,'Validando contraseña...');
+try {
+const ok = await validateSupervisorPass(pass);
+if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
+// password valid: perform update
+setLoading(true,'Aplicando decisión...');
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','update');
+url.searchParams.set('serial', serial);
+url.searchParams.set('newStatus', action);
+url.searchParams.set('autorizador', autorizador);
+url.searchParams.set('pass', pass);
+const res = await fetch(url.toString());
+if(!res.ok) throw new Error('Error servidor');
+const data = await res.json();
+if(data && data.ok){ alert('Actualizado'); // refresh pending list
+await refreshPendingsWithPass(pass);
+superPassInline.value = ''; // clear inline pass for security
+} else { alert('Error: ' + (data && data.error ? data.error : 'no se pudo actualizar')); }
+} catch(err){ console.error(err); alert('Error al actualizar'); } finally { setLoading(false); }
 }
 
 /* View details: open modal split view */
 function onViewDetailsClick(e){
-  const serial = e.currentTarget.dataset.serial;
-  const context = e.currentTarget.dataset.context || 'supervisor';
-  if(!serial) return alert('Serial no disponible');
-  const rec = recordMap.get(serial);
-  if(!rec) return alert('Registro no disponible');
-  openDetailModal(rec,{context});
+const serial = e.currentTarget.dataset.serial;
+const context = e.currentTarget.dataset.context || 'supervisor';
+if(!serial) return alert('Serial no disponible');
+const rec = recordMap.get(serial);
+if(!rec) return alert('Registro no disponible');
+openDetailModal(rec,{context});
 }
 
-/* Validate supervisor password by calling backend (action=pending&pass=...) */
+/* Validate supervisor password by calling backend (action=pending&pass=...) and accepting if it returns array */
 async function validateSupervisorPass(pass){
-  try {
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    url.searchParams.set('pass', pass);
-    const res = await fetch(url.toString());
-    if(!res.ok) return false;
-    const data = await res.json();
-    return Array.isArray(data) || (data && !data.error);
-  } catch(e){ console.error('Error validando pass',e); return false; }
+try {
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','pending');
+url.searchParams.set('pass', pass);
+const res = await fetch(url.toString());
+if(!res.ok) return false;
+const data = await res.json();
+return Array.isArray(data) || (data && !data.error); // accept if array or non-error response
+} catch(e){ console.error('Error validando pass',e); return false; }
 }
 
 /* Refresh pendings using provided pass (if backend requires pass) */
 async function refreshPendingsWithPass(pass){
-  try {
-    setLoading(true,'Refrescando pendientes...');
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    if(pass) url.searchParams.set('pass', pass);
-    const res = await fetch(url.toString());
-    if(!res.ok) throw new Error('No autorizado');
-    const data = await res.json();
-    pendingRecords = Array.isArray(data) ? data : [];
-    pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
-    renderPendingTable(pendingRecords);
-    if(supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block'){
-      renderSupervisorPending(pendingRecords);
-    }
-  } catch(e){ console.error(e); alert('Error al cargar pendientes'); } finally { setLoading(false); }
+try {
+setLoading(true,'Refrescando pendientes...');
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','pending');
+if(pass) url.searchParams.set('pass', pass);
+const res = await fetch(url.toString());
+if(!res.ok) throw new Error('No autorizado');
+const data = await res.json();
+pendingRecords = Array.isArray(data) ? data : [];
+pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
+renderPendingTable(pendingRecords);
+} catch(e){ console.error(e); alert('Error al cargar pendientes'); } finally { setLoading(false); }
 }
 
 /* btnRefresh: if inline pass provided, use it; else try without pass */
 btnRefresh.addEventListener('click', async ()=>{
-  const pass = superPassInline.value.trim();
-  await refreshPendingsWithPass(pass || undefined);
+const pass = superPassInline.value.trim();
+await refreshPendingsWithPass(pass || undefined);
 });
 
-/* Duplicate check (main): checks duplicates against ANY estatus in recordMap and pendingRecords */
+/* Duplicate check */
 btnCheckDuplicates.addEventListener('click', async ()=>{
-  if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
-  setLoading(true,'Verificando duplicados...');
-  try {
-    // Build counts from recordMap and pendingRecords
-    const counts = {};
-    for(const [k,v] of recordMap.entries()){ if(k) counts[String(k)] = (counts[String(k)]||0) + 1; }
-    pendingRecords.forEach(p=>{ if(p && p.serial) counts[String(p.serial)] = (counts[String(p.serial)]||0) + 1; });
-    const duplicates = Object.keys(counts).filter(k=>counts[k] > 1);
-    if(duplicates.length===0) alert('No se detectaron duplicados en los pendientes.');
-    else {
-      duplicates.forEach(d=>{
-        const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d))}"]`);
-        if(tr) tr.classList.add('duplicate-row');
-      });
-      alert(`Se detectaron ${duplicates.length} registro(s) duplicados. Filas resaltadas.`);
-    }
-  } catch(e){ console.error(e); alert('Error al verificar duplicados'); } finally { setLoading(false); }
+if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
+setLoading(true,'Verificando duplicados...');
+try {
+let authorizedList = [];
+try {
+const url = new URL(WEBAPP_URL);
+url.searchParams.set('action','authorized');
+const res = await fetch(url.toString());
+if(res.ok){ const data = await res.json(); if(Array.isArray(data)) authorizedList = data; }
+} catch(e){}
+const authSet = new Set();
+if(authorizedList.length>0){ authorizedList.forEach(r=>{ if(r && r.serial) authSet.add(String(r.serial)); }); }
+else {
+for(const [k,v] of recordMap.entries()){
+const st = (v.estatus || v[COL_INDEX.estatus] || '').toString().toUpperCase();
+if(st==='AUTORIZADO') authSet.add(String(k));
+}
+}
+const duplicates = pendingRecords.filter(r=>authSet.has(String(r.serial)));
+if(duplicates.length===0) alert('No se detectaron duplicados en los pendientes.');
+else {
+duplicates.forEach(d=>{
+const tr = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(d.serial))}"]`);
+if(tr) tr.classList.add('duplicate-row');
+});
+alert(`Se detectaron ${duplicates.length} registro(s) ya AUTORIZADOS. Filas resaltadas.`);
+}
+} catch(e){ console.error(e); alert('Error al verificar duplicados'); } finally { setLoading(false); }
 });
 
-/* Batch actions: similar flow, uses supervisorSelect as autorizador when panel open */
+/* Batch actions: similar flow, but will ask for password if not provided inline */
 btnBatchActions.addEventListener('click', async ()=>{
-  const table = pendingContainer.querySelector('table.pending-table');
-  if(!table) return alert('No hay pendientes');
-  const already = table.querySelector('thead th.select-col');
-  if(!already){
-    const th = document.createElement('th'); th.className='select-col'; th.innerHTML = '<input id="selectAll" type="checkbox" />';
-    table.querySelector('thead tr').insertBefore(th, table.querySelector('thead tr').children[0]);
-    table.querySelectorAll('tbody tr').forEach(tr=>{
-      const td = document.createElement('td'); td.innerHTML = `<input class="row-select" type="checkbox" data-serial="${escapeAttr(tr.dataset.serial)}" />`; tr.insertBefore(td, tr.children[0]);
-    });
-    document.getElementById('selectAll').addEventListener('change', e=>{ table.querySelectorAll('.row-select').forEach(cb=>cb.checked=e.target.checked); });
-    btnBatchActions.textContent='Aplicar acción en seleccionados';
-    btnBatchActions.classList.remove('btn','ghost'); btnBatchActions.classList.add('btn');
-    btnBatchActions.onclick = async ()=>{
-      const selected = Array.from(table.querySelectorAll('.row-select:checked')).map(cb=>cb.dataset.serial);
-      if(selected.length===0) return alert('No hay registros seleccionados');
-      const action = prompt(`Acción para ${selected.length} registros (AUTORIZADO / RECHAZADO):`);
-      if(!action) return;
-      const autorizador = (supervisorModal.style.display === 'flex' || supervisorModal.style.display === 'block') ? supervisorSelect.value : (detailAutoriza ? detailAutoriza.value : '');
-      let pass = superPassInline.value.trim();
-      if(!pass){
-        pass = prompt(`Introduce contraseña supervisor para acción en lote (${action})`);
-        if(!pass) return alert('Contraseña requerida para autorizar/rechazar');
-      }
-      setLoading(true,'Validando contraseña...');
-      try {
-        const ok = await validateSupervisorPass(pass);
-        if(!ok){ alert('Contraseña inválida'); setLoading(false); return; }
-        setLoading(true,'Aplicando decisiones en lote...');
-        for(const s of selected){
-          try {
-            const url = new URL(WEBAPP_URL);
-            url.searchParams.set('action','update');
-            url.searchParams.set('serial', s);
-            url.searchParams.set('newStatus', action);
-            url.searchParams.set('autorizador', autorizador);
-            url.searchParams.set('pass', pass);
-            await fetch(url.toString());
-          } catch(e){ console.warn('Error actualizando',s,e); }
-        }
-        alert('Acciones aplicadas. Refrescando pendientes...');
-        await refreshPendingsWithPass(pass);
-        superPassInline.value = '';
-      } catch(e){ console.error(e); alert('Error en acciones en lote'); } finally { setLoading(false); }
-    };
-  }
+const table = pendingContainer.querySelector('table.pending-table');
+if(!table) return alert('No hay pendientes');
+const already = table.querySelector('thead th.select-col');
+if(!already){
+const th = document.createElement('th'); th.className='select-col'; th.innerHTML = '<input id="selectAll" type="checkbox" />';
+table.querySelector('thead tr').insertBefore(th, table.querySelector('thead tr').children[0]);
+table.querySelectorAll('tbody tr').forEach(tr=>{
+const td = document.createElement('td'); td.innerHTML = `<input class="row-select" type="checkbox" data-serial="${escapeAttr(tr.dataset.serial)}" />`; tr.insertBefore(td, tr.children[0]);
 });
-
-/* Supervisor panel: open/close and render pendings inside it */
-openSupervisor.addEventListener('click', async ()=>{
-  supervisorModal.style.display = 'flex';
-  detailAutoriza.value = supervisorSelect.value;
-  renderSupervisorPending(pendingRecords);
-});
-supervisorClose.addEventListener('click', ()=>{ supervisorModal.style.display = 'none'; });
-supervisorRefresh.addEventListener('click', async ()=>{ const pass = superPassInline.value.trim(); await refreshPendingsWithPass(pass || undefined); });
-supervisorSelect.addEventListener('change', ()=>{ detailAutoriza.value = supervisorSelect.value; });
-
-/* Render pendings inside supervisor panel (with action controls) */
-function renderSupervisorPending(list){
-  if(!Array.isArray(list) || list.length===0){ superPendingContainer.innerHTML = '<div class="empty">No hay pendientes</div>'; return; }
-  const rows = list.map(item=>{
-    const pdfUrl = item.pdfUrl || item[COL_INDEX.pdf] || item['Link_PDF'] || item['link_pdf'] || '';
-    const pdfCellSimple = pdfUrl ? `<a href="${escapeAttr(String(pdfUrl))}" target="_blank" rel="noopener">Abrir</a>` : '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
-    const has = idx => { const v = getFieldByIndexForRender(item, idx); return v && String(v).trim() !== ''; };
-    const evidenceBadges = [ has(3)?'<span class="small" style="color:green">D</span>':'<span class="small" style="color:#ef4444">D✕</span>',
-      has(12)?'<span class="small" style="color:green">M</span>':'<span class="small" style="color:#ef4444">M✕</span>',
-      has(14)?'<span class="small" style="color:green">O</span>':'<span class="small" style="color:#ef4444">O✕</span>',
-      has(23)?'<span class="small" style="color:green">X</span>':'<span class="small" style="color:#ef4444">X✕</span>' ].join(' ');
-    return `<tr data-serial="${escapeAttr(String(item.serial||''))}">
-      <td style="font-weight:700">${escapeHtml(item.serial||'')}</td>
-      <td>${escapeHtml(item.cliente||item[COL_INDEX.cliente]||'')}</td>
-      <td>${escapeHtml(isLikelyDate(item.fecha)?formatDate(item.fecha):(item[COL_INDEX.fecha]||''))}</td>
-      <td>${renderEstatusBadge(item.estatus||item[COL_INDEX.estatus])}</td>
-      <td>${escapeHtml(item.modelo||'')}</td>
-      <td>${evidenceBadges}</td>
-      <td>${pdfCellSimple}</td>
-      <td>
-        <select class="actionSelect">
-          <option value="">-- Acción --</option>
-          <option value="AUTORIZADO">AUTORIZADO</option>
-          <option value="RECHAZADO">RECHAZADO</option>
-        </select>
-        <button class="applyBtn btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" style="margin-left:6px">Aplicar</button>
-        <button class="view-details btn ghost" data-serial="${escapeAttr(String(item.serial||''))}" data-context="supervisor" style="margin-left:6px">Ver detalles</button>
-      </td>
-    </tr>`;
-  }).join('');
-  superPendingContainer.innerHTML = `<div style="overflow:auto"><table class="pending-table" role="table" aria-label="Pendientes Supervisor"><thead><tr><th>Serie</th><th>Cliente</th><th>Fecha</th><th>Estatus</th><th>Modelo</th><th>Evidencias</th><th>PDF</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  const applyBtns = superPendingContainer.querySelectorAll('.applyBtn');
-  applyBtns.forEach(btn=>{ btn.removeEventListener('click', onApplyClick); btn.addEventListener('click', onApplyClick); });
-  const viewBtns = superPendingContainer.querySelectorAll('.view-details');
-  viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
-}
-
-/* Supervisor search inside panel */
-superSearchBtn.addEventListener('click', ()=>{
-  const q = superSearchSerial.value.trim().toLowerCase();
-  if(!q){ renderSupervisorPending(pendingRecords); return; }
-  const filtered = pendingRecords.filter(r=> r && r.serial && String(r.serial).toLowerCase().includes(q));
-  renderSupervisorPending(filtered);
-});
-
-/* Supervisor duplicate check across any estatus */
-superCheckDuplicates.addEventListener('click', async ()=>{
-  if(!pendingRecords || pendingRecords.length===0) return alert('No hay pendientes cargados');
-  setLoading(true,'Verificando duplicados (todos estatus)...');
-  try {
-    const counts = {};
-    for(const [k,v] of recordMap.entries()){ if(k) counts[String(k)] = (counts[String(k)]||0) + 1; }
-    pendingRecords.forEach(p=>{ if(p && p.serial) counts[String(p.serial)] = (counts[String(p.serial)]||0) + 1; });
-    const duplicates = Object.keys(counts).filter(k=>counts[k] > 1);
-    if(duplicates.length === 0) alert('No se detectaron duplicados en los pendientes ni en registros existentes.');
-    else {
-      duplicates.forEach(s=>{
-        const trMain = pendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(s))}"]`);
-        if(trMain) trMain.classList.add('duplicate-row');
-        const trSuper = superPendingContainer.querySelector(`tr[data-serial="${escapeAttr(String(s))}"]`);
-        if(trSuper) trSuper.classList.add('duplicate-row');
-      });
-      alert(`Se detectaron ${duplicates.length} serial(es) duplicados en el sistema. Filas resaltadas.`);
-    }
-  } catch(e){ console.error(e); alert('Error al verificar duplicados'); } finally { setLoading(false); }
-});
-
-/* Detail modal open */
-function openDetailModal(rec, opts){
-  currentDetailRecord = rec;
-  splitLeft.innerHTML = '';
-  Object.keys(rec).forEach(k=>{
-    const div = document.createElement('div'); div.className='field';
-    div.innerHTML = `<strong>${escapeHtml(k)}</strong><span>${escapeHtml(String(rec[k]||''))}</span>`;
-    splitLeft.appendChild(div);
-  });
-  const pdfUrl = rec.pdfUrl || rec[COL_INDEX.pdf] || '';
-  detailPdfFrame.src = transformToPreviewUrl(pdfUrl || '');
-  detailAutoriza.value = supervisorSelect ? supervisorSelect.value : (rec.autorizadoPor || 'CESAR');
-  detailModal.style.display = 'flex';
-}
-
-/* Close detail modal */
-detailClose.addEventListener('click', ()=>{ detailModal.style.display = 'none'; });
-
-/* Render estatus badge */
-function renderEstatusBadge(s){
-  const st = (s||'').toString().toUpperCase();
-  if(st.includes('AUTORIZ')) return `<span class="estatus autorizado">AUTORIZADO</span>`;
-  if(st.includes('RECHAZ')) return `<span class="estatus rechazado">RECHAZADO</span>`;
-  return `<span class="estatus pendiente">${escapeHtml(s||'PENDIENTE')}</span>`;
-}
-
-/* PDF cell renderer */
-function pdfCell(raw){
-  const url = raw ? transformToPreviewUrl(raw) : '';
-  if(!url) return '<span class="small" style="color:var(--brand-gray)">Sin PDF</span>';
-  return `<a href="${escapeAttr(url)}" target="_blank" rel="noopener">Ver PDF</a>`;
-}
-
-/* Attach result listeners */
-function attachResultListeners(){
-  const viewBtns = resultArea.querySelectorAll('.view-details');
-  viewBtns.forEach(b=>{ b.removeEventListener('click', onViewDetailsClick); b.addEventListener('click', onViewDetailsClick); });
-}
-
-/* Attach PDF clicks (placeholder) */
-function attachPdfClicks(){}
-
-/* Utility: refresh pendingRecords from server (no pass) */
-async function loadPendingsNoPass(){
-  try {
-    setLoading(true,'Cargando pendientes...');
-    const url = new URL(WEBAPP_URL);
-    url.searchParams.set('action','pending');
-    const res = await fetch(url.toString());
-    if(res.ok){
-      const data = await res.json();
-      pendingRecords = Array.isArray(data) ? data : [];
-      pendingRecords.forEach(r=>{ if(r && r.serial) recordMap.set(String(r.serial), r); });
-      renderPendingTable(pendingRecords);
-    } else {
-      pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>';
-      pendingMeta.textContent = 'Pendientes: —';
-    }
-  } catch(e){ console.warn('No se pudieron cargar pendientes automáticamente',e); pendingContainer.innerHTML = '<div class="empty">Introduce contraseña al aprobar/rechazar para ver o modificar pendientes.</div>'; pendingMeta.textContent = 'Pendientes: —'; }
-  finally { setLoading(false); }
-}
-</script>
-</body>
-</html>
+document.getElementById('selectAll').addEventListener('change', e=>{ table.querySelectorAll('.row-select').forEach(cb=>cb.checked=e.target.checked); });
+btnBatchActions.textContent='Aplicar acción en seleccionados';
+btnBatchActions.classList.remove('btn','ghost'); btnBatchActions.classList.add('btn');
+btnBatchActions.onclick = async ()=>{
+const selected = Array.from(table.querySelectorAll('.row-select:checked')).map(cb=>cb.dataset.serial);
+if(selected.length===0) return alert('No hay registros seleccionados');
+const action = prompt(`Acción para ${selected.length} registros (AUTORIZADO / RECHAZADO):`);
+if(!action) return;
